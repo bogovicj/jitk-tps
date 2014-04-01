@@ -76,10 +76,14 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		assertEquals("warp x1", -0.5, ptXfm[0], tol);
 		assertEquals("warp y1", -0.5, ptXfm[1], tol);
 
-		//		srcPt = new double[]{0.5f,0.5f};
-		//		ptXfm = tps.transformPoint(srcPt);
-		//		assertEquals("warp x2", 0.375, ptXfm[0], tol);
-		//		assertEquals("warp y2", 0.375, ptXfm[1], tol);
+		srcPt = new double[]{0.5f,0.5f};
+		ptXfm = tps.transformPoint(srcPt);
+		
+		// the values below are what matlab returns for
+		// tpaps( p, q, 1 );
+		// where p and q are the source and target points, respectively
+		assertEquals("warp x2", 0.6241617, ptXfm[0], tol);
+		assertEquals("warp y2", 0.6241617, ptXfm[1], tol);
 
 		srcPt = new double[]{1.0f,1.0f};
 		ptXfm = tps.transformPoint(srcPt);
