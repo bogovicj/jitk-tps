@@ -40,11 +40,16 @@ public abstract class KernelTransform {
 	
 	protected double 	stiffness = 0.0; // reasonable values take the range [0.0, 0.5]
 	protected boolean	wMatrixComputeD = false; 
+	protected boolean	computeAffine   = true; 
 	
-	protected int 								nLandmarks;
-	protected double[][]  sourceLandmarks;
-	protected double[][]  targetLandmarks;
-	protected double[] 	 weights;  // TODO: make the weights do something :-P
+	protected int 		      nLandmarks;
+	protected double[][]    sourceLandmarks;
+	protected double[][]    targetLandmarks;
+	protected double[] 	   weights;  // TODO: make the weights do something :-P
+
+	protected float[][]     sourceLandmarksF;
+	protected float[][]     targetLandmarksF;
+	protected float[] 	   weightsF;  // TODO: make the weights do something :-P
 
 	protected double[][] displacement; // TODO: do we need this? yMatrix seems to hold the same values
 	
@@ -114,7 +119,8 @@ public abstract class KernelTransform {
 		
 	}
 
-	private void initMatrices()
+   public void setDoAffine(boolean estimateAffine)
+   { this.computeAffine = estimateAffine; } private void initMatrices()
 	{
 		pMatrix = new DenseMatrix64F( (ndims * nLandmarks), ( ndims * (ndims + 1)) );
 		dMatrix = new DenseMatrix64F( ndims, nLandmarks);
@@ -188,7 +194,6 @@ public abstract class KernelTransform {
 	 */
 	public void computeW(){
 		
-		System.out.println("here" );	
 		computeL();
 		computeY();
 
@@ -209,7 +214,13 @@ public abstract class KernelTransform {
 
 	protected void computeL(){
 
-		computeP();
+      // fill P matrix if the affine parameters need to be computed
+      if(computeAffine)
+      {
+         computeP();
+      }
+      // P matrix should be zero if points are already affinely aligned 
+      
 		computeK();
 
 		CommonOps.insert( kMatrix, lMatrix, 0, 0 );
@@ -391,6 +402,24 @@ public abstract class KernelTransform {
 		return result;
 	}
 
+	/**
+	 * Transforms the input point according to the
+	 * thin plate spline stored by this object.  
+	 *
+	 * @param pt the point to be transformed
+	 * @return the transformed point
+	 */
+	public float[] transformPoint(float[] ptIn){ //TODO this implementation is ugly as is
+	
+      double[] pt = new double[ptIn.length];
+		for (int i = 0; i < pt.length; i++){ pt[i] = ptIn[i]; }
+      double[] ptOut = transformPoint(pt);
+
+      float[] result = new float[pt.length];
+		for (int i = 0; i < pt.length; i++){ result[i] = (float)ptOut[i]; }
+
+		return result;
+	}
 	
 	/**
 	 * Computes the displacement between the i^th and j^th source points.
