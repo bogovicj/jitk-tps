@@ -84,6 +84,50 @@ public abstract class KernelTransform {
 		setLandmarks(srcPts, tgtPts);
 	}
 
+   /**
+    * Constructor with transformation parameters.
+    * aMatrix and bVector are allowed to be null
+    */
+   public KernelTransform( double[][] srcPts, double[][] aMatrix, double[] bVector, double[] dMatrixData )
+   {
+
+      this.ndims = srcPts.length;
+      this.nLandmarks = srcPts[0].length;
+
+      this.sourceLandmarks = srcPts;
+      this.aMatrix = aMatrix;
+      this.bVector = bVector;
+
+      dMatrix = new DenseMatrix64F( ndims, nLandmarks);
+      dMatrix.setData(dMatrixData);
+
+   }
+
+   public int getNumLandmarks(){
+      return this.nLandmarks; 
+   }
+
+   public int getNumDims(){
+      return ndims;
+   }
+
+   public double[][] getSourceLandmarks(){
+      return sourceLandmarks;
+   }
+
+   public double[][] getAffine(){
+      return aMatrix;
+   }
+
+   public double[] getTranslation(){
+      return bVector;
+   }
+
+   public double[] getKnotWeights(){
+      return dMatrix.getData();
+   }
+
+
    /*
     * Sets the source and target landmarks for this KernelTransform object
     *
@@ -113,14 +157,17 @@ public abstract class KernelTransform {
 		this.sourceLandmarks = srcPts;
 		this.targetLandmarks = tgtPts;
 
-		initMatrices();
 	
 		//TODO consider calling computeW() here.
 		
 	}
 
    public void setDoAffine(boolean estimateAffine)
-   { this.computeAffine = estimateAffine; } private void initMatrices()
+   { 
+      this.computeAffine = estimateAffine; 
+   } 
+   
+   private void initMatrices()
 	{
 		pMatrix = new DenseMatrix64F( (ndims * nLandmarks), ( ndims * (ndims + 1)) );
 		dMatrix = new DenseMatrix64F( ndims, nLandmarks);
@@ -131,9 +178,13 @@ public abstract class KernelTransform {
 									  ndims * ( nLandmarks + ndims + 1) );
 		wMatrix = new DenseMatrix64F( (ndims * nLandmarks) + ndims * ( ndims + 1),
 				  					  1 );
-		
-		aMatrix = new double[ndims][ndims];
-		bVector = new double[ndims];
+	
+      if( computeAffine )
+      {
+         aMatrix = new double[ndims][ndims];
+         bVector = new double[ndims];
+      }
+
 		displacement = new double[nLandmarks][ndims];
 	}
 
@@ -194,6 +245,8 @@ public abstract class KernelTransform {
 	 */
 	public void computeW(){
 		
+		initMatrices();
+
 		computeL();
 		computeY();
 
@@ -316,19 +369,22 @@ public abstract class KernelTransform {
 		}
 		logger.debug(" dMatrix:\n" + dMatrix);
 
-		// the affine part of the transform
-		for( int j=0; j<ndims; j++) for (int i=0; i<ndims; i++) {
-			aMatrix[i][j] =  wMatrix.get(ci,0);
-			ci++;
-		}
-		logger.debug(" affine:\n" + printArray(aMatrix));
+      if( computeAffine )
+      {
+         // the affine part of the transform
+         for( int j=0; j<ndims; j++) for (int i=0; i<ndims; i++) {
+            aMatrix[i][j] =  wMatrix.get(ci,0);
+            ci++;
+         }
+         logger.debug(" affine:\n" + printArray(aMatrix));
 
-		// the translation part of the transform
-		for( int k=0; k<ndims; k++) {
-			bVector[k] = wMatrix.get(ci, 0);
-			ci++;
-		}
-		logger.debug(" b:\n" + printArray(bVector) +"\n");
+         // the translation part of the transform
+         for( int k=0; k<ndims; k++) {
+            bVector[k] = wMatrix.get(ci, 0);
+            ci++;
+         }
+         logger.debug(" b:\n" + printArray(bVector) +"\n");
+      }
 		wMatrix = null;
 		
 	}
@@ -388,16 +444,21 @@ public abstract class KernelTransform {
 		
 		double[] result = computeDeformationContribution( pt );
 
-		// affine part
-		for (int i = 0; i < ndims; i++)
-			for (int j = 0; j < ndims; j++) {
-				result[i] += aMatrix[i][j] * pt[j];
-			}
+      if( aMatrix != null )
+      {
+         // affine part
+         for (int i = 0; i < ndims; i++) for (int j = 0; j < ndims; j++) {
+            result[i] += aMatrix[i][j] * pt[j];
+         }
+      }
 
-		// translational part
-		for(int i=0; i<ndims; i++){
-			result[i] += bVector[i] + pt[i];
-		}
+      if( bVector != null)
+      {
+         // translational part
+         for(int i=0; i<ndims; i++){
+            result[i] += bVector[i] + pt[i];
+         }
+      }
 
 		return result;
 	}
