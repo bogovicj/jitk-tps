@@ -437,13 +437,18 @@ public abstract class KernelTransformFloat {
 	 */
    public float[] transformPoint(float[] pt){
 		
-		float[] result = computeDeformationContribution( pt );
+	   float[] result = computeDeformationContribution( pt );
 
       if(aMatrix != null){
          // affine part
          for (int i = 0; i < ndims; i++) for (int j = 0; j < ndims; j++) {
             result[i] += aMatrix[i][j] * pt[j];
          }
+      }else{
+    	  for (int i = 0; i < ndims; i++) 
+    	  {
+    		  result[i] += pt[i];
+    	  }
       }
 
       if(bVector != null){
@@ -456,17 +461,41 @@ public abstract class KernelTransformFloat {
 		return result;
 	}
 
-//   /**
-//    * Returns the point in the source space
-//    * that will be transformed to the input
-//    * destination point.
-//    *
-//    * @param dest the coordinates of the destination point
-//    */
-//   public float[] inverseTransform( float[] dest )
-//   {
-//
-//   }
+   /**
+    *
+    */
+   public void transformInPlace(float[] pt)
+   {
+      float[] ptCopy = new float[ndims];
+      for (int i = 0; i < ndims; i++){
+         ptCopy[i] = pt[i];
+      }
+
+      float[] result = computeDeformationContribution( pt );
+      for (int i = 0; i < ndims; i++){
+         pt[i] = result[i];
+      }
+
+      if(aMatrix != null){
+         // affine part
+         for (int i = 0; i < ndims; i++) for (int j = 0; j < ndims; j++) {
+            pt[i] += aMatrix[i][j] * ptCopy[j];
+         }
+      }else{
+    	  for (int i = 0; i < ndims; i++) 
+    	  {
+    		  pt[i] += ptCopy[i];
+    	  }
+      }
+
+      if(bVector != null){
+         // translational part
+         for(int i=0; i<ndims; i++){
+            pt[i] += bVector[i] + ptCopy[i];
+         }
+      }
+
+   }
 	
 	/**
 	 * Computes the displacement between the i^th and j^th source points.

@@ -1,6 +1,7 @@
 package jitk.spline;
 
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 
@@ -17,6 +18,50 @@ public class ThinPlateSplineKernelTransformTest {
 		}
 
 		return pts;
+	}
+	
+	@Test 
+	public void testIdentity(){
+		int ndims = 3;
+		
+		double[][] pts = new double[][]
+				{
+				{-1,0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2}, // x
+				{-1,0,0,0,1,1,1,2,2,2,0,0,0,1,1,1,2,2,2}, // y
+				{-1,0,1,2,0,1,2,0,1,2,0,1,2,0,1,2,0,1,2}, // z
+				};
+		int nL = pts[0].length;
+		
+		ThinPlateSplineKernelTransform tps = new ThinPlateSplineKernelTransform( ndims, pts, pts );
+		tps.computeW();
+		
+		double[] testPt = new double[ndims];
+		for( int n=0; n<nL; n++) {
+			for( int i=0; i<ndims; i++) {
+				testPt[i] = pts[i][n];
+			}
+			
+			double[] outPt = tps.transformPoint(testPt);
+			for( int i=0; i<ndims; i++) {
+				assertEquals("Identity transformation", pts[i][n], outPt[i], tol);
+			}
+		}
+		
+		ThinPlateSplineKernelTransform tpsNA = new ThinPlateSplineKernelTransform( ndims, pts, pts );
+		tpsNA.setDoAffine(false);
+		tpsNA.computeW();
+		
+		for( int n=0; n<nL; n++) {
+			for( int i=0; i<ndims; i++) {
+				testPt[i] = pts[i][n];
+			}
+			
+			double[] outPt = tpsNA.transformPoint(testPt);
+			for( int i=0; i<ndims; i++) {
+				assertEquals("Identity transformation", pts[i][n], outPt[i], tol);
+			}
+		}
+		
 	}
 
 	@Test

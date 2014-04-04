@@ -289,7 +289,7 @@ public abstract class KernelTransform {
 	}
 
 	protected void computeP(){
-		System.out.println("srcPts: " + sourceLandmarks);	
+		
 		DenseMatrix64F tmp = new DenseMatrix64F(ndims,ndims);
 
 		for( int i=0; i<nLandmarks; i++ ){
@@ -450,6 +450,11 @@ public abstract class KernelTransform {
          for (int i = 0; i < ndims; i++) for (int j = 0; j < ndims; j++) {
             result[i] += aMatrix[i][j] * pt[j];
          }
+      }else{
+    	  for (int i = 0; i < ndims; i++) 
+    	  {
+    		  result[i] += pt[i];
+    	  }
       }
 
       if( bVector != null)

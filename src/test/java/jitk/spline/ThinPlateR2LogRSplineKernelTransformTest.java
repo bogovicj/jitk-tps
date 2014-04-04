@@ -20,6 +20,50 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		return pts;
 	}
 
+	@Test 
+	public void testIdentity(){
+		int ndims = 3;
+		
+		double[][] pts = new double[][]
+				{
+				{-1,0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2}, // x
+				{-1,0,0,0,1,1,1,2,2,2,0,0,0,1,1,1,2,2,2}, // y
+				{-1,0,1,2,0,1,2,0,1,2,0,1,2,0,1,2,0,1,2}, // z
+				};
+		int nL = pts[0].length;
+		
+		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, pts, pts );
+		tps.computeW();
+		
+		double[] testPt = new double[ndims];
+		for( int n=0; n<nL; n++) {
+			for( int i=0; i<ndims; i++) {
+				testPt[i] = pts[i][n];
+			}
+			
+			double[] outPt = tps.transformPoint(testPt);
+			for( int i=0; i<ndims; i++) {
+				assertEquals("Identity transformation", pts[i][n], outPt[i], tol);
+			}
+		}
+		
+		ThinPlateR2LogRSplineKernelTransform tpsNA = new ThinPlateR2LogRSplineKernelTransform( ndims, pts, pts );
+		tpsNA.setDoAffine(false);
+		tpsNA.computeW();
+		
+		for( int n=0; n<nL; n++) {
+			for( int i=0; i<ndims; i++) {
+				testPt[i] = pts[i][n];
+			}
+			
+			double[] outPt = tpsNA.transformPoint(testPt);
+			for( int i=0; i<ndims; i++) {
+				assertEquals("Identity transformation", pts[i][n], outPt[i], tol);
+			}
+		}
+		
+	}
+	
 	@Test
 	public void testScale3d() {
 
@@ -78,15 +122,12 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 		//System.out.println(" aMatrix: (Expect all zeros)\n" + 
 		//		printArray(tps.aMatrix) + "\n");
-		assertEquals("aMatrix should be zeros", 0, tps.aMatrix[0][0], tol);
-		assertEquals("aMatrix should be zeros", 0, tps.aMatrix[0][1], tol);
-		assertEquals("aMatrix should be zeros", 0, tps.aMatrix[1][0], tol);
-		assertEquals("aMatrix should be zeros", 0, tps.aMatrix[1][1], tol);
+		assertTrue("aMatrix should be null", tps.aMatrix==null);
 		
 		//System.out.println(" bVector: (Expect all zeros)\n" + 
 		//		printArray(tps.bVector) + "\n");
-		assertEquals("aMatrix should be zeros", 0, tps.bVector[0], tol);
-		assertEquals("aMatrix should be zeros", 0, tps.bVector[1], tol);
+		assertTrue("bVector should be null", tps.bVector==null);
+
 
 		//System.out.println(" dMatrix: (Expect non-zero)\n" + tps.dMatrix + "\n");
 		boolean isNonZeroMtxElem = false;
