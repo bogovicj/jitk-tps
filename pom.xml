@@ -25,4 +25,14 @@
   		<scope>test</scope>
   	</dependency>
   </dependencies>
+  <scm>
+  	<url>https://github.com/bogovicj/jitk-tps</url>
+  	<connection>scm:git:git://github.com/bogovicj/jitk-tps</connection>
+  	<developerConnection>scm:git:git@github.com:bogovicj/jitk-tps</developerConnection>
+  	<tag>HEAD</tag>
+  </scm>
+  <issueManagement>
+  	<system>GitHub</system>
+  	<url>https://github.com/bogovicj/jitk-tps/issues</url>
+  </issueManagement>
 </project>
