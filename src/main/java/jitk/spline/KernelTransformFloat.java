@@ -437,12 +437,23 @@ public abstract class KernelTransformFloat {
 	 */
    public float[] transformPoint(float[] pt){
 		
-	   float[] result = computeDeformationContribution( pt );
-
+	  logger.trace("transforming pt:  " + printArray(pt));
+	  float[] result = computeDeformationContribution( pt );
+	  
+	  logger.trace("res after def:   " + printArray(result));
+	  
       if(aMatrix != null){
          // affine part
          for (int i = 0; i < ndims; i++) for (int j = 0; j < ndims; j++) {
             result[i] += aMatrix[i][j] * pt[j];
+         }
+      }
+      logger.trace("res after aff:   " + printArray(result));
+      
+      if(bVector != null){
+         // translational part
+         for(int i=0; i<ndims; i++){
+            result[i] += bVector[i] + pt[i];
          }
       }else{
     	  for (int i = 0; i < ndims; i++) 
@@ -450,13 +461,7 @@ public abstract class KernelTransformFloat {
     		  result[i] += pt[i];
     	  }
       }
-
-      if(bVector != null){
-         // translational part
-         for(int i=0; i<ndims; i++){
-            result[i] += bVector[i] + pt[i];
-         }
-      }
+      logger.trace("res after trn:   " + printArray(result));
 
 		return result;
 	}

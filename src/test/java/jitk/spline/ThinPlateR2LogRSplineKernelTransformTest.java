@@ -1,5 +1,9 @@
 package jitk.spline;
 
+import java.util.Random;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -8,16 +12,93 @@ import static org.junit.Assert.*;
 public class ThinPlateR2LogRSplineKernelTransformTest {
 	
 	public static double tol = 0.0001;
-
-
-	public static double[][] genPtListScale( double[][] srcPts , double[] scales ){
-		double[][] pts = new double[srcPts.length][srcPts[0].length];
+	public static Random rand = new Random( 31415926536l );
+	
+	double[][] srcPts;
+	double[][] tgtPts;
+	
+	float[][] srcPtsF;
+	float[][] tgtPtsF;
+	
+	int ndims;
+	int N;
+	
+	public Logger logger = LogManager.getLogger(ThinPlateR2LogRSplineKernelTransformTest.class.getName());
+	
+	
+	
+	public void genPtListNoAffine1(){
+		N = 50;
+		int D = 10;
+		ndims = 3;
 		
-		for(int d=0; d<srcPts.length; d++) for (int n=0; n<srcPts[0].length; n++) {
-			pts[d][n] = scales[d] * srcPts[d][n]; 
+		srcPts = new double[3][2*N];
+		tgtPts = new double[3][2*N];
+		
+		int k = 0;
+		for( int i=0; i<N; i++ )
+		{
+			
+			double[] off = new double[]{
+					rand.nextDouble(),
+					rand.nextDouble(),
+					rand.nextDouble() };
+			
+			srcPts[0][k] = D*rand.nextDouble();
+			srcPts[1][k] = D*rand.nextDouble();
+			srcPts[2][k] = D*rand.nextDouble();
+			
+			tgtPts[0][k] = srcPts[0][k] + off[0];
+			tgtPts[1][k] = srcPts[1][k] + off[1];
+			tgtPts[2][k] = srcPts[2][k] + off[2];
+			k++;
+			
+			srcPts[0][k] = -srcPts[0][k-1];
+			srcPts[1][k] = -srcPts[1][k-1];
+			srcPts[2][k] = -srcPts[2][k-1];
+			
+			tgtPts[0][k] = srcPts[0][k] - off[0];
+			tgtPts[1][k] = srcPts[1][k] - off[1];
+			tgtPts[2][k] = srcPts[2][k] - off[2];
+			k++;
+			
 		}
-
-		return pts;
+	}
+	
+	@Test
+	public void testAffineOnly(){
+		ndims = 3;
+		srcPts = new double[][]
+				{
+				{0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2}, // x
+				{0,0,0,1,1,1,2,2,2,0,0,0,1,1,1,2,2,2}, // y
+				{0,1,2,0,1,2,0,1,2,0,1,2,0,1,2,0,1,2}, // z
+				};
+		
+		
+		double[][] aff = new double[][]{
+				{0, 1, 0},
+				{0, 0, 1},
+				{1, 0, 0} };
+		
+		N = srcPts[0].length;
+		tgtPts = XfmUtils.genPtListAffine(srcPts, aff);
+		
+		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, srcPts, tgtPts );
+		tps.setDoAffine(false);
+		tps.computeW();
+		
+		double[] testPt = new double[ndims];
+		for( int n=0; n<N; n++) {
+			for( int i=0; i<ndims; i++) {
+				testPt[i] = srcPts[i][n];
+			}
+			
+			double[] outPt = tps.transformPoint(testPt);
+			for( int i=0; i<ndims; i++) {
+				assertEquals("pure affine transformation", tgtPts[i][n], outPt[i], tol);
+			}
+		}
 	}
 
 	@Test 
@@ -75,7 +156,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 				{0,1,2,0,1,2,0,1,2,0,1,2,0,1,2,0,1,2}, // z
 				};
 
-		double[][] tgtPtList = genPtListScale(src_simple, new double[]{2, 0.5, 4});
+		double[][] tgtPtList = XfmUtils.genPtListScale(src_simple, new double[]{2, 0.5, 4});
 
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, src_simple, tgtPtList );
 		tps.computeW();
@@ -100,8 +181,36 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		assertEquals("scale z3", 4.0, ptXfm[2], tol);
 	}
 
+	@Test 
+	public void testAffineReasonable(){
+		
+		genPtListNoAffine1();
+		
+		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, srcPts, tgtPts );
+		//tps.setDoAffine(false);
+		tps.computeW();
+		
+		double[][] a = tps.getAffine();
+		double[] t   = tps.getTranslation();
+		
+		System.out.println("a: " + XfmUtils.printArray(a)+"\n");
+		System.out.println("t: " + XfmUtils.printArray(t));
+		
+		double[] testPt = new double[ndims];
+		for( int n=0; n<2*N; n++) {
+			for( int i=0; i<ndims; i++) {
+				testPt[i] = srcPts[i][n];
+			}
+			
+			double[] outPt = tps.transformPoint(testPt);
+			for( int i=0; i<ndims; i++) {
+				assertEquals("Identity transformation", tgtPts[i][n], outPt[i], tol);
+			}
+		}
+	}
+	
 	@Test
-	public void testAffineDone() {
+	public void testAffineSanity() {
 		
 		int ndims = 2;
 		double[][] src = new double[][]
@@ -139,41 +248,52 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 	}
 	
-	public static final String printArray(double[][] in){
-		if(in==null) return "null";
-		String out = "";
-		for(int i=0; i<in.length; i++){
-			for(int j=0; j<in[0].length; j++){
-				out += in[i][j] +" ";
+
+	
+	@Test
+	public void testScale2() {
+		ndims = 2;
+		N     = 6;
+		srcPtsF = new float[ndims][N];
+		for(int d=0; d<ndims; d++)for( int i=0; i<N; i++){
+			srcPtsF[d][i] = (float)( 10 * rand.nextDouble());
+		}
+		tgtPtsF = XfmUtils.genPtListScale(srcPtsF, new double[]{2, 0.5});
+		
+		ThinPlateR2LogRSplineKernelTransformFloat tps = new ThinPlateR2LogRSplineKernelTransformFloat( ndims, srcPtsF, tgtPtsF );
+		tps.computeW();
+		
+		float[] testPt = new float[ndims];
+		for( int n=0; n<N; n++) {
+			
+			for( int i=0; i<ndims; i++) {
+				testPt[i] = srcPtsF[i][n];
 			}
-			out +="\n";
+			
+			float[] outPt = tps.transformPoint(testPt);
+			for( int i=0; i<ndims; i++) {
+				assertEquals("Identity transformation", tgtPtsF[i][n], outPt[i], tol);
+			}
 		}
-		return out;
+		
 	}
-	
-	public static final String printArray(double[] in){
-		if(in==null) return "null";
-		String out = "";
-		for(int i=0; i<in.length; i++){
-			out += in[i] +" ";
-		}
-		return out;
-	}
-	
 	
 	@Test
 	public void testScale() {
 
 		int ndims = 2;
-		double[][] src_simple = new double[][]
+		srcPts = new double[][]
 				{
 				{0,0,0,1,1,1,2,2,2}, // x
 				{0,1,2,0,1,2,0,1,2}, // y
 				};
 
-		double[][] tgtPtList = genPtListScale(src_simple, new double[]{2, 0.5});
+		tgtPts = XfmUtils.genPtListScale(srcPts, new double[]{2, 0.5});
+		
+		logger.debug("srcPts:\n" + XfmUtils.printArray(srcPts));
+		logger.debug("\ntgtPts:\n" + XfmUtils.printArray(tgtPts));
 
-		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, src_simple, tgtPtList );
+		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, srcPts, tgtPts );
 		tps.computeW();
 
 
@@ -191,6 +311,21 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		ptXfm = tps.transformPoint(srcPt);
 		assertEquals("scale x3", 2.0, ptXfm[0], tol);
 		assertEquals("scale y3", 0.5, ptXfm[1], tol);
+		
+		
+		N = srcPts[0].length;
+		double[] testPt = new double[ndims];
+		for( int n=0; n<N; n++) {
+			
+			for( int d=0; d<ndims; d++) {
+				testPt[d] = srcPts[d][n];
+			}
+			
+			double[] outPt = tps.transformPoint(testPt);
+			for( int d=0; d<ndims; d++) {
+				assertEquals("Identity transformation", tgtPts[d][n], outPt[d], tol);
+			}
+		}
 	}
 
 	@Test

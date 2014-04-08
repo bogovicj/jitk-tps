@@ -157,9 +157,7 @@ public abstract class KernelTransform {
 		this.sourceLandmarks = srcPts;
 		this.targetLandmarks = tgtPts;
 
-	
 		//TODO consider calling computeW() here.
-		
 	}
 
    public void setDoAffine(boolean estimateAffine)
@@ -169,20 +167,30 @@ public abstract class KernelTransform {
    
    private void initMatrices()
 	{
-		pMatrix = new DenseMatrix64F( (ndims * nLandmarks), ( ndims * (ndims + 1)) );
-		dMatrix = new DenseMatrix64F( ndims, nLandmarks);
-		wMatrix = new DenseMatrix64F( ndims, nLandmarks);
-		kMatrix = new DenseMatrix64F( ndims * nLandmarks, ndims * nLandmarks);
-		yMatrix = new DenseMatrix64F( ndims * ( nLandmarks + ndims + 1), 1 );
-		lMatrix = new DenseMatrix64F( ndims * ( nLandmarks + ndims + 1),
-									  ndims * ( nLandmarks + ndims + 1) );
-		wMatrix = new DenseMatrix64F( (ndims * nLandmarks) + ndims * ( ndims + 1),
-				  					  1 );
+		
+      dMatrix = new DenseMatrix64F( ndims, nLandmarks);
+      kMatrix = new DenseMatrix64F( ndims * nLandmarks, ndims * nLandmarks);
 	
       if( computeAffine )
       {
          aMatrix = new double[ndims][ndims];
          bVector = new double[ndims];
+
+	   	pMatrix = new DenseMatrix64F( (ndims * nLandmarks), ( ndims * (ndims + 1)) );
+		   lMatrix = new DenseMatrix64F( ndims * ( nLandmarks + ndims + 1),
+									  ndims * ( nLandmarks + ndims + 1) );
+         wMatrix = new DenseMatrix64F( (ndims * nLandmarks) + ndims * ( ndims + 1),
+				  					  1 );
+         yMatrix = new DenseMatrix64F( ndims * ( nLandmarks + ndims + 1), 1 );
+      }
+      else
+      {
+         // we dont need the P matrix and L can point
+         // directly to K rather than itself being initialized
+
+         // the W matrix won't hold the affine component
+         wMatrix = new DenseMatrix64F( ndims * nLandmarks , 1 );
+         yMatrix = new DenseMatrix64F( ndims * nLandmarks , 1 );
       }
 
 		displacement = new double[nLandmarks][ndims];
@@ -267,23 +275,28 @@ public abstract class KernelTransform {
 
 	protected void computeL(){
 
+      computeK();
+
       // fill P matrix if the affine parameters need to be computed
       if(computeAffine)
       {
          computeP();
+
+         CommonOps.insert( kMatrix, lMatrix, 0, 0 );
+         CommonOps.insert( pMatrix, lMatrix, 0, kMatrix.getNumCols() );
+         CommonOps.transpose(pMatrix);
+
+         CommonOps.insert( pMatrix, lMatrix, kMatrix.getNumRows(), 0 );
+         CommonOps.insert( kMatrix, lMatrix, 0, 0 );
+         // P matrix should be zero if points are already affinely aligned 
+         // bottom left O2 is already zeros after initializing 'lMatrix'
       }
-      // P matrix should be zero if points are already affinely aligned 
-      
-		computeK();
-
-		CommonOps.insert( kMatrix, lMatrix, 0, 0 );
-		CommonOps.insert( pMatrix, lMatrix, 0, kMatrix.getNumCols() );
-		CommonOps.transpose(pMatrix);
-
-		CommonOps.insert( pMatrix, lMatrix, kMatrix.getNumRows(), 0 );
-		CommonOps.insert( kMatrix, lMatrix, 0, 0 );
-	
-      // bottom left O2 is already zeros after initializing 'lMatrix'
+      else
+      {
+         // in this case the L matrix 
+         // consists only of the K block.
+         lMatrix = kMatrix;
+      }
 		
       
 	}
@@ -345,9 +358,12 @@ public abstract class KernelTransform {
 				yMatrix.set( i*ndims + j, 0, displacement[i][j]);
 			}
 		}
-		for (int i=0; i< ndims * (ndims + 1); i++) {
-			yMatrix.set( nLandmarks * ndims + i, 0, 0);
-		}
+      if ( computeAffine )
+      {
+         for (int i=0; i< ndims * (ndims + 1); i++) {
+            yMatrix.set( nLandmarks * ndims + i, 0, 0);
+         }
+      }
 
 	}
 
@@ -376,37 +392,19 @@ public abstract class KernelTransform {
             aMatrix[i][j] =  wMatrix.get(ci,0);
             ci++;
          }
-         logger.debug(" affine:\n" + printArray(aMatrix));
+         logger.debug(" affine:\n" + XfmUtils.printArray(aMatrix));
 
          // the translation part of the transform
          for( int k=0; k<ndims; k++) {
             bVector[k] = wMatrix.get(ci, 0);
             ci++;
          }
-         logger.debug(" b:\n" + printArray(bVector) +"\n");
+         logger.debug(" b:\n" + XfmUtils.printArray(bVector) +"\n");
       }
 		wMatrix = null;
 		
 	}
 
-	public String printArray(double[] a){
-		String out = "";
-		for(int i=0; i<a.length; i++){
-			out += a[i] + " ";
-		}	
-		out += "\n";
-		return out;
-	}
-	public String printArray(double[][] a){
-		String out = "";
-		for(int i=0; i<a.length; i++){
-			for(int j=0; j<a[0].length; j++){
-				out += a[i][j] + " ";
-			}	
-			out += "\n";
-		}
-		return out;
-	}
 
    /**
     * Transforms the input point according to the affine part of 
@@ -442,20 +440,19 @@ public abstract class KernelTransform {
 	 */
 	public double[] transformPoint(double[] pt){
 		
-		double[] result = computeDeformationContribution( pt );
-
+	  logger.trace("transforming pt:  " + XfmUtils.printArray(pt));
+	  
+	  double[] result = computeDeformationContribution( pt );
+	  logger.trace("res after def:   " + XfmUtils.printArray(result));
       if( aMatrix != null )
       {
+    	
          // affine part
          for (int i = 0; i < ndims; i++) for (int j = 0; j < ndims; j++) {
             result[i] += aMatrix[i][j] * pt[j];
          }
-      }else{
-    	  for (int i = 0; i < ndims; i++) 
-    	  {
-    		  result[i] += pt[i];
-    	  }
       }
+      logger.trace("res after aff:   " + XfmUtils.printArray(result));
 
       if( bVector != null)
       {
@@ -463,9 +460,15 @@ public abstract class KernelTransform {
          for(int i=0; i<ndims; i++){
             result[i] += bVector[i] + pt[i];
          }
+      }else
+      {
+    	  for(int i=0; i<ndims; i++){
+    		  result[i] += pt[i];
+    	  }
       }
-
-		return result;
+      logger.trace("res after trn:   " + XfmUtils.printArray(result));
+      
+      return result;
 	}
 
 	/**
