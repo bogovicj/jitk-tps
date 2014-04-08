@@ -26,7 +26,6 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 	public Logger logger = LogManager.getLogger(ThinPlateR2LogRSplineKernelTransformTest.class.getName());
 	
 	
-	
 	public void genPtListNoAffine1(){
 		N = 50;
 		int D = 10;
@@ -101,6 +100,82 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		}
 	}
 
+	@Test 
+	public void testIdentitySmall2d(){
+		int ndims = 2;
+		
+		float[][] pts = new float[][]
+				{
+				{-1,0,1}, // x
+				{-1,0,1}  // y
+				};
+		
+//		double[][] ptsd = new double[][]
+//				{
+//				{-1,0,1}, // x
+//				{-1,0,1}  // y
+//				};
+		
+		int nL = pts[0].length;
+		
+		float[][] tpts   = XfmUtils.genPtListScale(pts , new double[]{2,3});
+		
+		ThinPlateR2LogRSplineKernelTransformFloat tps = new ThinPlateR2LogRSplineKernelTransformFloat( ndims, pts, tpts );
+		tps.computeW();
+		
+		
+		float[] testPt = new float[ndims];
+		for( int n=0; n<nL; n++) {
+			for( int i=0; i<ndims; i++) {
+				testPt[i] = pts[i][n];
+			}
+			
+			float[] outPt = tps.transformPoint(testPt);
+			for( int i=0; i<ndims; i++) {
+				assertEquals("Identity transformation", tpts[i][n], outPt[i], tol);
+			}
+		}
+	}
+	
+	@Test 
+	public void testIdentitySmall3d(){
+		int ndims = 3;
+		
+		float[][] pts = new float[][]
+				{
+				{0,0,0,0,0,0,1,1}, // x
+				{0,0,0,1,1,1,2,2}, // y
+				{0,1,2,0,1,2,0,1}  // z					
+				};
+		
+//		double[][] ptsd = new double[][]
+//				{
+//				{-1,0,1},  // x
+//				{-1,0,1},  // y
+//				{-1,0,1}   // z
+//				};
+		
+		int nL = pts[0].length;
+		
+		float[][] tpts   = XfmUtils.genPtListScale(pts , new double[]{2,3,0.5});
+		
+		ThinPlateR2LogRSplineKernelTransformFloat tps = new ThinPlateR2LogRSplineKernelTransformFloat( ndims, pts, tpts );
+		tps.computeW();
+		
+		
+		float[] testPt = new float[ndims];
+		for( int n=0; n<nL; n++) {
+			for( int i=0; i<ndims; i++) {
+				testPt[i] = pts[i][n];
+			}
+			
+			float[] outPt = tps.transformPoint(testPt);
+			for( int i=0; i<ndims; i++) {
+				assertEquals("Identity transformation", tpts[i][n], outPt[i], tol);
+			}
+		}
+	}
+	
 	@Test 
 	public void testIdentity(){
 		int ndims = 3;

@@ -26,8 +26,6 @@ public abstract class KernelTransformFloat {
    protected int ndims;
 
 	protected DenseMatrix64F gMatrix;
-	protected DenseMatrix64F pMatrix;
-	protected DenseMatrix64F kMatrix;
 	protected DenseMatrix64F dMatrix;
 	protected DenseMatrix64F wMatrix;
 	protected DenseMatrix64F lMatrix;
@@ -164,15 +162,19 @@ public abstract class KernelTransformFloat {
    
    private void initMatrices()
 	{
-		pMatrix = new DenseMatrix64F( (ndims * nLandmarks), ( ndims * (ndims + 1)) );
-		dMatrix = new DenseMatrix64F( ndims, nLandmarks);
+		
+	   	//pMatrix = new DenseMatrix64F( (ndims * nLandmarks), ( ndims * (ndims + 1)) );
+		//kMatrix = new DenseMatrix64F( ndims * nLandmarks, ndims * nLandmarks);
+		
 		wMatrix = new DenseMatrix64F( ndims, nLandmarks);
-		kMatrix = new DenseMatrix64F( ndims * nLandmarks, ndims * nLandmarks);
-		yMatrix = new DenseMatrix64F( ndims * ( nLandmarks + ndims + 1), 1 );
+		
 		lMatrix = new DenseMatrix64F( ndims * ( nLandmarks + ndims + 1),
-									  ndims * ( nLandmarks + ndims + 1) );
+				  ndims * ( nLandmarks + ndims + 1) );
+		
+		yMatrix = new DenseMatrix64F( ndims * ( nLandmarks + ndims + 1), 1 );
 		wMatrix = new DenseMatrix64F( (ndims * nLandmarks) + ndims * ( ndims + 1),
 				  					  1 );
+		dMatrix = new DenseMatrix64F( ndims, nLandmarks);
 		
       if( computeAffine )
       {
@@ -245,11 +247,26 @@ public abstract class KernelTransformFloat {
 		computeL();
 		computeY();
 
-      logger.debug(" lMatrix: " + lMatrix);
-      logger.debug(" yMatrix: " + yMatrix);
+		logger.debug(" lMatrix: " + lMatrix);
+		logger.debug(" yMatrix: " + yMatrix);
 
 		// solve linear system 
-		LinearSolver<DenseMatrix64F> solver =  LinearSolverFactory.pseudoInverse(true);
+		LinearSolver<DenseMatrix64F> solver = null;
+		
+		// use pseudoinverse for underdetermined system
+		// linear solver otherwise
+		if( nLandmarks < ndims*ndims )
+		{
+			logger.debug("pseudo - inverse solver");
+			solver =  LinearSolverFactory.pseudoInverse(true);
+		}else
+		{
+			logger.debug("linear solver");
+			solver =  LinearSolverFactory.linear(lMatrix.numCols);
+		}
+		
+//		LinearSolverFactory.general(lMatrix.numRows, lMatrix.numCols);
+		
 		solver.setA(lMatrix);
 		solver.solve(yMatrix, wMatrix);
 
@@ -270,39 +287,36 @@ public abstract class KernelTransformFloat {
       // P matrix should be zero if points are already affinely aligned 
       
 		computeK();
-
-		CommonOps.insert( kMatrix, lMatrix, 0, 0 );
-		CommonOps.insert( pMatrix, lMatrix, 0, kMatrix.getNumCols() );
-		CommonOps.transpose(pMatrix);
-
-		CommonOps.insert( pMatrix, lMatrix, kMatrix.getNumRows(), 0 );
-		CommonOps.insert( kMatrix, lMatrix, 0, 0 );
 	
-      // bottom left O2 is already zeros after initializing 'lMatrix'
-		
-      
+      // bottom left O2 is already zeros after initializing 'lMatrix'	
 	}
 
+	/**
+	 * Inserts the blocks of the P matrix directly into the L matrix
+	 */
 	protected void computeP(){
-		System.out.println("srcPts: " + sourceLandmarks);	
+		
+		int offset = ndims*nLandmarks;
+		
 		DenseMatrix64F tmp = new DenseMatrix64F(ndims,ndims);
 
 		for( int i=0; i<nLandmarks; i++ ){
-
 			for( int d=0; d<ndims; d++ ){
 
 				CommonOps.scale( sourceLandmarks[d][i], I, tmp);
-				CommonOps.insert( tmp, pMatrix,  i*ndims, d*ndims );
+				CommonOps.insert( tmp, lMatrix,  offset + d*ndims, i*ndims ); // maybe ok
+				CommonOps.insert( tmp, lMatrix,  i*ndims, offset + d*ndims ); // good
 
 			}
-			CommonOps.insert( I, pMatrix,  i*ndims, ndims*ndims );
+			CommonOps.insert( I, lMatrix,  offset + ndims*ndims, i*ndims ); // maybe ok
+			CommonOps.insert( I, lMatrix,  i*ndims, offset + ndims*ndims ); // good 
 		}
 	}
 
 
 	/**
-	 * Builds the K matrix from landmark points
-	 * and G matrix.
+	 * Builds the K matrix from landmark points and G matrix
+	 * but drops the results directly into the L matrix.
 	 */
 	protected void computeK(){
 
@@ -313,18 +327,18 @@ public abstract class KernelTransformFloat {
 		for( int i=0; i<nLandmarks; i++ ){
 
 			DenseMatrix64F G = computeReflexiveG();
-			CommonOps.insert(G, kMatrix, i * ndims, i * ndims);
+			CommonOps.insert(G, lMatrix, i * ndims, i * ndims);
 
 			for( int j = i+1; j<nLandmarks; j++ ){
 
 				srcPtDisplacement(i,j,res);
 				computeG(res, G);
 
-				CommonOps.insert(G, kMatrix, i * ndims, j * ndims);
-				CommonOps.insert(G, kMatrix, j * ndims, i * ndims);
+				CommonOps.insert(G, lMatrix, i * ndims, j * ndims);
+				CommonOps.insert(G, lMatrix, j * ndims, i * ndims);
 			}
 		}
-		logger.debug(" kMatrix: \n" + kMatrix + "\n");
+		logger.debug(" kMatrix: \n" + lMatrix + "\n");
 	}
 
 
@@ -381,7 +395,12 @@ public abstract class KernelTransformFloat {
 		   logger.debug(" b:\n" + printArray(bVector) +"\n");
       }
 
+      	logger.debug(" ");
+      	
 		wMatrix = null;
+		yMatrix = null;
+		lMatrix = null;
+		System.gc();
 	}
 
 	public String printArray(float[] a){
