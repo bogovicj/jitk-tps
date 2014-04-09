@@ -390,21 +390,23 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		tps.computeAffine();
 		tps.updateDisplacementPostAffine();
 		
-//		N = srcPtsF[0].length;
-//		float[] testPt = new float[ndims];
-//		for( int n=0; n<N; n++) {
-//
-//			for( int d=0; d<ndims; d++) {
-//				testPt[d] = srcPtsF[d][n];
-//			}
-//
-//			float[] outPt = tps.transformPointAffine(testPt);
-//			for( int d=0; d<ndims; d++) {
-//				assertEquals("translation, use affine", tgtPtsF[d][n], outPt[d], tol);
-//			}
-//		}
-	
 		tps.computePostAffineDef();
+		
+		N = srcPtsF[0].length;
+		float[] testPt = new float[ndims];
+		for( int n=0; n<N; n++) {
+
+			for( int d=0; d<ndims; d++) {
+				testPt[d] = srcPtsF[d][n];
+			}
+
+			float[] outPt = tps.transformPoint(testPt);
+			logger.debug("point: " + XfmUtils.printArray(testPt) + " -> " + XfmUtils.printArray(outPt));
+			for( int d=0; d<ndims; d++) {
+				assertEquals("translation, use affine", tgtPtsF[d][n], outPt[d], tol);
+			}
+		}
+	
 		
 	}
 	
