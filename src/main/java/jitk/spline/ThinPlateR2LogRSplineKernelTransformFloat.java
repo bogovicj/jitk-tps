@@ -19,7 +19,7 @@ import org.ejml.ops.CommonOps;
  * @author John Bogovic
  *
  */
-public class ThinPlateR2LogRSplineKernelTransformFloat extends KernelTransformFloat {
+public class ThinPlateR2LogRSplineKernelTransformFloat extends KernelTransformFloatSeparable {
 
 	protected double eps = 1e-8;
 
@@ -42,13 +42,11 @@ public class ThinPlateR2LogRSplineKernelTransformFloat extends KernelTransformFl
    }
 
 	@Override
-	public void computeG(float[] pt, DenseMatrix64F mtx) {
+	public double computeG( float[] pt ) {
 
 		double r = Math.sqrt(normSqrd(pt));
 		double nrm = r2Logr(r);
-
-		CommonOps.setIdentity(mtx);
-		CommonOps.scale(nrm,mtx);
+		return nrm;
 
 	}
 

@@ -354,6 +354,61 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 	}
 	
 	@Test
+	public void testTransXfmAffineTps(){
+		
+//		int ndims = 2;
+//		float[][] src_simple = new float[][]
+//				{
+//				{-1,-1,-1,1,1,1,2,2,2}, // x
+//				{-1,1,2,-1,1,2,0,1,2}, // y
+//				};
+//		
+//		// target points
+//		float[][] tgt= new float[][]
+//				{
+//				{ -0.5f, -0.5f, -0.5f, 1.5f, 1.5f, 1.5f, 2.0f, 2.0f, 2.0f}, // x
+//				{ -0.5f, 1.5f, 2.0f, -0.5f, 1.5f, 2.0f, -0.5f, 1.5f, 2.0f } // y
+//				};
+		
+		int ndims = 2;
+		srcPtsF = new float[][]
+				{
+				{-1,-1,-1,1,1,1,2,2,2}, // x
+				{-1,1,2,-1,1,2,-1,1,2}, // y
+				};
+		
+		// target points
+		tgtPtsF= new float[][]
+				{
+					{ 0,0,0, 2,2,2, 3,3,3}, // x
+					{ 1,3,4, 1,3,4, 1,3,5 } // y
+				};
+
+		ThinPlateR2LogRSplineKernelTransformFloat tps 
+			= new ThinPlateR2LogRSplineKernelTransformFloat( ndims, srcPtsF, tgtPtsF);
+
+		tps.computeAffine();
+		tps.updateDisplacementPostAffine();
+		
+//		N = srcPtsF[0].length;
+//		float[] testPt = new float[ndims];
+//		for( int n=0; n<N; n++) {
+//
+//			for( int d=0; d<ndims; d++) {
+//				testPt[d] = srcPtsF[d][n];
+//			}
+//
+//			float[] outPt = tps.transformPointAffine(testPt);
+//			for( int d=0; d<ndims; d++) {
+//				assertEquals("translation, use affine", tgtPtsF[d][n], outPt[d], tol);
+//			}
+//		}
+	
+		tps.computePostAffineDef();
+		
+	}
+	
+	@Test
 	public void testScale() {
 
 		int ndims = 2;
@@ -377,7 +432,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		assertEquals("scale x1", 0, ptXfm[0], tol);
 		assertEquals("scale y1", 0, ptXfm[1], tol);
 
-		srcPt = new double[]{ 0.5f, 0.5f };
+		srcPt = new double[]{ 0.5f, 0.5f };	
 		ptXfm = tps.transformPoint(srcPt);
 		assertEquals("scale x2", 1.00, ptXfm[0], tol);
 		assertEquals("scale y2", 0.25, ptXfm[1], tol);
