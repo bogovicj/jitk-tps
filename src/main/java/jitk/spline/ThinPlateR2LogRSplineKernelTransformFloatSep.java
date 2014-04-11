@@ -19,45 +19,35 @@ import org.ejml.ops.CommonOps;
  * @author John Bogovic
  *
  */
-public class ThinPlateR2LogRSplineKernelTransformFloat extends KernelTransformFloat {
+public class ThinPlateR2LogRSplineKernelTransformFloatSep extends KernelTransformFloatSeparable {
 
 	protected double eps = 1e-8;
 
-	protected static Logger logger = LogManager.getLogger(ThinPlateR2LogRSplineKernelTransformFloat.class.getName());
+	protected static Logger logger = LogManager.getLogger(ThinPlateR2LogRSplineKernelTransformFloatSep.class.getName());
 
-	public ThinPlateR2LogRSplineKernelTransformFloat(){
+	public ThinPlateR2LogRSplineKernelTransformFloatSep(){
 		super();
 	}
 
-	public ThinPlateR2LogRSplineKernelTransformFloat( int ndims, float[][] srcPts, float[][] tgtPts)
+	public ThinPlateR2LogRSplineKernelTransformFloatSep( int ndims, float[][] srcPts, float[][] tgtPts)
 	{
 		super( ndims, srcPts, tgtPts );
 	}
 
 
      
-   public ThinPlateR2LogRSplineKernelTransformFloat( float[][] srcPts, float[][] aMatrix, float[] bVector, double[] dMatrixData )
+   public ThinPlateR2LogRSplineKernelTransformFloatSep( float[][] srcPts, float[][] aMatrix, float[] bVector, double[] dMatrixData )
    {
       super( srcPts, aMatrix, bVector, dMatrixData);
    }
 
-//	@Override
-//	public double computeG( float[] pt ) {
-//
-//		double r = Math.sqrt(normSqrd(pt));
-//		double nrm = r2Logr(r);
-//		return nrm;
-//
-//	}
-	
 	@Override
-	public void computeG(float[] pt, DenseMatrix64F mtx) {
+	public double computeG( float[] pt ) {
+
 		double r = Math.sqrt(normSqrd(pt));
 		double nrm = r2Logr(r);
+		return nrm;
 
-		CommonOps.setIdentity(mtx);
-		CommonOps.scale(nrm,mtx);
-		
 	}
 
 	@Override

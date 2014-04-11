@@ -14,8 +14,15 @@ import org.ejml.ops.CommonOps;
  * Ported from itk's itkKernelTransform.hxx
  * <p>
  * M. H. Davis, a Khotanzad, D. P. Flamig, and S. E. Harms, 
- * ‚ÄúA physics-based coordinate transformation for 3-D image matching.,‚Äù 
- * IEEE Trans. Med. Imaging, vol. 16, no. 3, pp. 317‚Äì28, Jun. 1997. 
+ * ‚A physics-based coordinate transformation for 3-D image matching.,
+ * IEEE Trans. Med. Imaging, vol. 16, no. 3, pp. 317‚28, Jun. 1997. 
+ * 
+ * The process() method is the correct 
+ *  
+ * ktfs = new 'subclassConstructor;
+ * kfts.setDoAffine(doAffine);
+ * kfts.process();
+ * 
  *
  * @author Kitware (ITK)
  * @author John Bogovic
@@ -159,22 +166,16 @@ public abstract class KernelTransformFloatSeparable {
       this.computeAffine = estimateAffine; 
    } 
    
-   private void initMatrices()
-	{
-		
-		lMatrix = new DenseMatrix64F( ( nLandmarks + ndims + 1 ), ( nLandmarks + ndims + 1 ) );
-		yMatrix = new DenseMatrix64F( ( nLandmarks + ndims + 1 ), 1 );
-		wMatrix = new DenseMatrix64F( ( nLandmarks + ndims + 1 ), 1 );
-		
-		dMatrix = new DenseMatrix64F( ndims, nLandmarks );
-		
-      if( computeAffine )
-      {
-         aMatrix = new float[ndims][ndims];
-         bVector = new float[ndims];
-      }
-		displacement = new float[nLandmarks][ndims];
-	}
+   /**
+    * This method computes the transformation after source and target points have been set.
+    */
+   public void fit(){
+	   if(computeAffine){
+		   computeAffine();
+		   updateDisplacementPostAffine();
+	   }
+		computePostAffineDef();
+   }
 
    private void initMatricesDef()
 	{
@@ -216,7 +217,7 @@ public abstract class KernelTransformFloatSeparable {
 	}
 
 
-   public void computeAffine()
+   protected void computeAffine()
    {
       initMatricesAffine();
       computeD();
@@ -238,7 +239,7 @@ public abstract class KernelTransformFloatSeparable {
 
    }
 
-   public void computeAffineL(){
+   protected void computeAffineL(){
       for( int d=0; d<ndims; d++ ) 
       {
          for( int i=0; i<nLandmarks; i++ )
@@ -252,7 +253,7 @@ public abstract class KernelTransformFloatSeparable {
       }
    }
 
-   public void updateDisplacementPostAffine()
+   protected void updateDisplacementPostAffine()
    {
 
       float[] srcPtTmp = new float[ndims];
@@ -335,7 +336,7 @@ public abstract class KernelTransformFloatSeparable {
       return nrm;
    }
 
-   public void computePostAffineDef(){
+	protected void computePostAffineDef(){
 
       // need to do this so that the 
       // reorganizeW call works properly
@@ -403,90 +404,6 @@ public abstract class KernelTransformFloatSeparable {
 			logger.debug("wMatrix:\n" + wMatrix );
 
 			reorganizeW(d);
-		}
-	}
-
-	/**
-	 * The main workhorse method.
-	 * <p>
-	 * Implements Equation (5) in Davis et al.
-	 * and calls reorganizeW.
-	 *
-	 */
-	public void computeW(){
-		
-		initMatrices();
-		
-		computeD(); // only compute D once
-
-		for (int d =0; d<ndims; d++)
-		{
-			// clear any previous data in the matrices
-			yMatrix.zero();
-			lMatrix.zero();
-			wMatrix.zero();
-			
-			computeL(d);
-			computeY(d);
-
-			logger.debug(" lMatrix: " + lMatrix);
-			logger.debug(" yMatrix: " + yMatrix);
-
-			// solve linear system 
-			LinearSolver<DenseMatrix64F> solver = null;
-
-			// use pseudoinverse for underdetermined system
-			// linear solver otherwise
-			if( nLandmarks < ndims*ndims )
-			{
-				logger.debug("pseudo - inverse solver");
-				solver =  LinearSolverFactory.pseudoInverse(true);
-			}else
-			{
-				logger.debug("linear solver");
-				solver =  LinearSolverFactory.linear(lMatrix.numCols);
-			}
-
-			// the general solver appears to work about as well as the linear solver
-			//		LinearSolverFactory.general(lMatrix.numRows, lMatrix.numCols);
-
-			solver.setA(lMatrix);
-			solver.solve(yMatrix, wMatrix);
-
-			logger.debug("wMatrix:\n" + wMatrix );
-
-			reorganizeW(d);
-			
-		}
-	}
-
-
-	protected void computeL(int dim){
-
-		// fill P matrix if the affine parameters need to be computed
-		if(computeAffine)
-		{
-			computeP(dim);
-		}
-		// P matrix should be zero if points are already affinely aligned 
-
-		computeK(dim);
-
-		// bottom left O2 is already zeros after initializing 'lMatrix'	
-	}
-
-	/**
-	 * Inserts the blocks of the P matrix directly into the L matrix
-	 */
-	protected void computeP(int dim){
-
-		for( int i=0; i<nLandmarks; i++ )
-		{
-			lMatrix.set( nLandmarks, i, sourceLandmarks[dim][i] );
-			lMatrix.set( i, nLandmarks, sourceLandmarks[dim][i] );
-			
-			lMatrix.set( nLandmarks+1, i, 1 );
-			lMatrix.set( i, nLandmarks+1, 1 );
 		}
 	}
 

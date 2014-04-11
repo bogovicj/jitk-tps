@@ -384,13 +384,10 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 					{ 1,3,4, 1,3,4, 1,3,5 } // y
 				};
 
-		ThinPlateR2LogRSplineKernelTransformFloat tps 
-			= new ThinPlateR2LogRSplineKernelTransformFloat( ndims, srcPtsF, tgtPtsF);
+		ThinPlateR2LogRSplineKernelTransformFloatSep tps 
+			= new ThinPlateR2LogRSplineKernelTransformFloatSep( ndims, srcPtsF, tgtPtsF);
 
-		tps.computeAffine();
-		tps.updateDisplacementPostAffine();
-		
-		tps.computePostAffineDef();
+		tps.fit();
 		
 		N = srcPtsF[0].length;
 		float[] testPt = new float[ndims];
