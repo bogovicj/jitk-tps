@@ -24,6 +24,11 @@
   		<version>4.11</version>
   		<scope>test</scope>
   	</dependency>
+  	<dependency>
+  		<groupId>mpicbg-trakem2</groupId>
+  		<artifactId>mpicbg-trakem2</artifactId>
+  		<version>0.6.2-SNAPSHOT</version>
+  	</dependency>
   </dependencies>
   <scm>
   	<url>https://github.com/bogovicj/jitk-tps</url>
@@ -35,4 +40,9 @@
   	<system>GitHub</system>
   	<url>https://github.com/bogovicj/jitk-tps/issues</url>
   </issueManagement>
+  <parent>
+  	<artifactId>pom-mpicbg</artifactId>
+  	<version>0.6.2-SNAPSHOT</version>
+  	<groupId>mpicbg</groupId>
+  </parent>
 </project>
