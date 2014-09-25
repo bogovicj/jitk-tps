@@ -497,5 +497,67 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		assertEquals("warp y3", 1.5, ptXfm[1], tol);
 
 	}
+	
+	@Test
+	public void testAddPoints() {
 
+		int ndims = 2;
+
+		ThinPlateR2LogRSplineKernelTransform tps 
+			= new ThinPlateR2LogRSplineKernelTransform( ndims );
+
+		for( int i = 0; i<200; i++){
+			tps.addMatch( new double[]{ Math.random(), Math.random() },
+					 	  new double[]{ Math.random(), Math.random() } );
+		}
+
+	}
+
+	@Test
+	public void testWeights() {
+
+		int ndims = 2;
+		double[][] src_simple = new double[][]
+				{
+				{0,0,0,1,1,1,2,2,2}, // x
+				{0,1,2,0,1,2,0,1,2}, // y
+				};
+		// target points
+		double[][] tgt= new double[][]
+				{
+				{ -0.5, -0.5, -0.5, 1.5, 1.5, 1.5, 2.0, 2.0, 2.0}, // x
+				{ -0.5, 1.5, 2.0, -0.5, 1.5, 2.0, -0.5, 1.5, 2.0 } // y
+				};
+//		double[] weights = new double[]
+//				{ 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+
+		double[] weights = new double[]
+				{ 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 1.0};
+		
+		ThinPlateR2LogRSplineKernelTransform tps 
+			= new ThinPlateR2LogRSplineKernelTransform( ndims, src_simple, tgt, weights);
+		tps.computeW();
+		//tps.printLandmarks();
+
+		double[] srcPt = new double[]{0.0f,0.0f};
+		double[] ptXfm = tps.transformPoint(srcPt);
+		assertEquals("warp x1", -0.5, ptXfm[0], tol);
+		assertEquals("warp y1", -0.5, ptXfm[1], tol);
+
+		srcPt = new double[]{0.5f,0.5f};
+		ptXfm = tps.transformPoint(srcPt);
+		
+		// the values below are what matlab returns for
+		// tpaps( p, q, 1 );
+		// where p and q are the source and target points, respectively
+		assertEquals("warp x2", 0.6241617, ptXfm[0], tol);
+		assertEquals("warp y2", 0.6241617, ptXfm[1], tol);
+
+		srcPt = new double[]{1.0f,1.0f};
+		ptXfm = tps.transformPoint(srcPt);
+		assertEquals("warp x3", 1.5, ptXfm[0], tol);
+		assertEquals("warp y3", 1.5, ptXfm[1], tol);
+
+	}
+	
 }

@@ -52,6 +52,23 @@ public class XfmUtils {
 		return pts;
 	}
 	
+	public double[] subtract(double[] p1, double[] p2){
+		int nd = p1.length; 
+		double[] out = new double[nd];
+		for (int d=0; d<nd; d++){
+			out[d] = p1[d] - p2[d];
+		}
+		return out;
+	}
+	
+	public double[] subtract(double[] p1, double[] p2, double[] out){
+		int nd = out.length; 
+		for (int d=0; d<nd; d++){
+			out[d] = p1[d] - p2[d];
+		}
+		return out;
+	}
+	
 	public static final String printArray(double[][] in){
 		if(in==null) return "null";
 		String out = "";

@@ -1,11 +1,9 @@
 package jitk.spline;
 
-
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
-
 
 /**
  * Subclass of {@link KernelTransform} that implements a Thin-plate spline transformation.
@@ -28,13 +26,17 @@ public class ThinPlateR2LogRSplineKernelTransform extends KernelTransform {
 	public ThinPlateR2LogRSplineKernelTransform(){
 		super();
 	}
-
+	public ThinPlateR2LogRSplineKernelTransform( int ndims ){
+		super( ndims );
+	}
 	public ThinPlateR2LogRSplineKernelTransform( int ndims, double[][] srcPts, double[][] tgtPts)
 	{
 		super( ndims, srcPts, tgtPts );
 	}
-
-
+	public ThinPlateR2LogRSplineKernelTransform( int ndims, double[][] srcPts, double[][] tgtPts, double[] weights )
+	{
+		super( ndims, srcPts, tgtPts, weights );
+	}
 
 	@Override
 	public void computeG(double[] pt, DenseMatrix64F mtx) {
@@ -44,6 +46,14 @@ public class ThinPlateR2LogRSplineKernelTransform extends KernelTransform {
 
 		CommonOps.setIdentity(mtx);
 		CommonOps.scale(nrm,mtx);
+
+	}
+	
+	@Override
+	public void computeG(double[] pt, DenseMatrix64F mtx, double w ) {
+
+		computeG( pt, mtx );
+		CommonOps.scale(w,mtx);
 
 	}
 

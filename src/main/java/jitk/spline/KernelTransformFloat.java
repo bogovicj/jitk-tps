@@ -1,5 +1,7 @@
 package jitk.spline;
 
+import mpicbg.models.CoordinateTransform;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.ejml.data.*;
@@ -21,7 +23,7 @@ import org.ejml.ops.CommonOps;
  * @author John Bogovic
  *
  */
-public abstract class KernelTransformFloat {
+public abstract class KernelTransformFloat implements CoordinateTransform {
 	
    protected int ndims;
 
@@ -38,14 +40,23 @@ public abstract class KernelTransformFloat {
 	
 	protected double 	stiffness = 0.0; // reasonable values take the range [0.0, 0.5]
 	protected boolean	wMatrixComputeD = false; 
-	protected boolean	computeAffine   = true; 
+	protected boolean	computeAffine   = true;
+	protected boolean	isInverse 	    = false; 
 	
-	protected int 		      nLandmarks;
+	protected int 		   nLandmarks;
 	protected float[][]    sourceLandmarks;
 	protected float[][]    targetLandmarks;
 	protected float[] 	   weights;  // TODO: make the weights do something :-P
 
 	protected float[][] displacement; // TODO: do we need this? yMatrix seems to hold the same values
+	
+	//
+	KernelTransformFloat inv = null;
+	
+	// parameters relating
+	protected int 	 initialContainerSize = 100;
+	protected double increaseRaio = 0.25;
+	protected int 	 containerSize;
 	
 	protected static Logger logger = LogManager.getLogger(KernelTransformFloat.class.getName());
 	
@@ -68,7 +79,12 @@ public abstract class KernelTransformFloat {
 			I.set(i,i,1);
 		}
 		
-	}
+		nLandmarks = 0;
+		sourceLandmarks = new float[ndims][initialContainerSize];
+		targetLandmarks = new float[ndims][initialContainerSize];
+		containerSize = initialContainerSize;
+		
+	}	
 
 	/*
 	 * Constructor with point matches 
@@ -76,6 +92,15 @@ public abstract class KernelTransformFloat {
 	public KernelTransformFloat( int ndims, float[][] srcPts, float[][] tgtPts){
 		this(ndims);
 		setLandmarks(srcPts, tgtPts);
+	}
+
+	/*
+	 * Constructor with point matches and weights
+	 */
+	public KernelTransformFloat( int ndims, float[][] srcPts, float[][] tgtPts, float[] weights ){
+		this(ndims);
+		setLandmarks(srcPts, tgtPts);
+        setWeights( weights );
 	}
 
    /**
@@ -109,6 +134,10 @@ public abstract class KernelTransformFloat {
       return sourceLandmarks;
    }
 
+   public float[][] getTargetLandmarks(){
+	   return targetLandmarks;
+   }
+   
    public float[][] getAffine(){
       return aMatrix;
    }
@@ -150,16 +179,92 @@ public abstract class KernelTransformFloat {
 		this.sourceLandmarks = srcPts;
 		this.targetLandmarks = tgtPts;
 
-	
-		//TODO consider calling computeW() here.
-		
+
+		// consider calling computeW() here.
+        // No - the work should be an explicit call, but
+        // consider naming it something better
+        
 	}
+
+	public void updateSourceLandmark( int i, float[] newSource ){
+		for(int j=0; j<ndims; j++)
+		{
+			sourceLandmarks[j][i] = newSource[j];
+		}
+	}
+	
+	public void updateTargetLandmark( int i, float[] newTarget ){
+		for(int j=0; j<ndims; j++)
+		{
+			targetLandmarks[j][i] = newTarget[j];
+		}
+	}
+	
+	public void addMatch( double[] source, double[] target )
+	{
+		float[] src = new float[source.length];
+		float[] tgt = new float[target.length];
+		for(int i=0; i<source.length; i++){
+			src[i]= (float) source[i];
+			tgt[i]= (float) target[i];
+		}
+		addMatch( src, tgt );
+	}
+
+	public void addMatch( float[] source, float[] target )
+	{
+		if( nLandmarks + 1 > containerSize ){
+			expandLandmarkContainers();
+		}
+		for( int d = 0; d<ndims; d++){
+			sourceLandmarks[d][nLandmarks] = source[d];
+			targetLandmarks[d][nLandmarks] = target[d];
+		}
+		nLandmarks++;
+	}
+
+	protected void expandLandmarkContainers()
+	{
+		int newSize = containerSize + (int) Math.round( increaseRaio * containerSize );
+		logger.debug("increasing container size from " + containerSize  + " to " + newSize );
+		float[][] NEWsourceLandmarks = new float[ndims][newSize];
+		float[][] NEWtargetLandmarks = new float[ndims][newSize];
+
+		for( int d = 0; d<ndims; d++) for( int n = 0; n<nLandmarks; n++){
+			NEWsourceLandmarks[d][n] = sourceLandmarks[d][n];
+			NEWtargetLandmarks[d][n] = targetLandmarks[d][n];
+		}
+
+		containerSize   = newSize;
+		sourceLandmarks = NEWsourceLandmarks;
+		targetLandmarks = NEWtargetLandmarks;
+	}
+
+    /**
+     * Sets the weights.  Checks that the length matches 
+     * the number of landmarks.
+     */
+   private void setWeights( float[] weights ){
+        // make sure the length matches number
+        // of landmarks
+        if( weights==null){
+            return;
+        }
+        if( weights.length != this.nLandmarks ){
+            this.weights = weights;
+        }else{
+            logger.error( "weights have length (" + weights.length  + 
+                    ") but tmust have length equal to number of landmarks " +
+                    this.nLandmarks );
+        }
+   }
 
    public void setDoAffine(boolean estimateAffine)
    { 
       this.computeAffine = estimateAffine; 
    } 
-   
+  
+
    private void initMatrices()
 	{
 		
@@ -232,6 +337,15 @@ public abstract class KernelTransformFloat {
       return nrm;
    }
 
+	
+	public void solve(){
+		computeW();
+	}
+	
+	public void solve( boolean isInverse ){
+		this.isInverse = isInverse;
+		computeW();
+	}
 
 	/**
 	 * The main workhorse method.
@@ -385,14 +499,14 @@ public abstract class KernelTransformFloat {
             aMatrix[i][j] =  (float)wMatrix.get(ci,0);
             ci++;
          }
-         logger.debug(" affine:\n" + printArray(aMatrix));
+         logger.debug(" affine:\n" + XfmUtils.printArray(aMatrix));
 
          // the translation part of the transform
          for( int k=0; k<ndims; k++) {
             bVector[k] = (float)wMatrix.get(ci, 0);
             ci++;
          }
-		   logger.debug(" b:\n" + printArray(bVector) +"\n");
+		   logger.debug(" b:\n" + XfmUtils.printArray(bVector) +"\n");
       }
 
       	logger.debug(" ");
@@ -401,25 +515,6 @@ public abstract class KernelTransformFloat {
 		yMatrix = null;
 		lMatrix = null;
 		System.gc();
-	}
-
-	public String printArray(float[] a){
-		String out = "";
-		for(int i=0; i<a.length; i++){
-			out += a[i] + " ";
-		}	
-		out += "\n";
-		return out;
-	}
-	public String printArray(float[][] a){
-		String out = "";
-		for(int i=0; i<a.length; i++){
-			for(int j=0; j<a[0].length; j++){
-				out += a[i][j] + " ";
-			}	
-			out += "\n";
-		}
-		return out;
 	}
 
    /**
@@ -456,10 +551,10 @@ public abstract class KernelTransformFloat {
 	 */
    public float[] transformPoint(float[] pt){
 		
-	  logger.trace("transforming pt:  " + printArray(pt));
+	  logger.trace("transforming pt:  " + XfmUtils.printArray(pt));
 	  float[] result = computeDeformationContribution( pt );
 	  
-	  logger.trace("res after def:   " + printArray(result));
+	  logger.trace("res after def:   " + XfmUtils.printArray(result));
 	  
       if(aMatrix != null){
          // affine part
@@ -467,7 +562,7 @@ public abstract class KernelTransformFloat {
             result[i] += aMatrix[i][j] * pt[j];
          }
       }
-      logger.trace("res after aff:   " + printArray(result));
+      logger.trace("res after aff:   " + XfmUtils.printArray(result));
       
       if(bVector != null){
          // translational part
@@ -480,9 +575,9 @@ public abstract class KernelTransformFloat {
     		  result[i] += pt[i];
     	  }
       }
-      logger.trace("res after trn:   " + printArray(result));
+      logger.trace("res after trn:   " + XfmUtils.printArray(result));
 
-		return result;
+      return result;
 	}
 
    /**
@@ -520,7 +615,16 @@ public abstract class KernelTransformFloat {
       }
 
    }
+
+	public float[] apply(float[] location) {
+		return transformPoint( location );
+	}
+
+	public void applyInPlace(float[] location) {
+		transformInPlace( location );		
+	}
 	
+
 	/**
 	 * Computes the displacement between the i^th and j^th source points.
 	 *
@@ -547,22 +651,23 @@ public abstract class KernelTransformFloat {
 			res[d] = sourceLandmarks[d][i] - pt[d];
 		}
 	}
-	protected float[] subtract(float[] p1, float[] p2){
-		int nd = p1.length; 
-		float[] out = new float[nd];
-		for (int d=0; d<nd; d++){
-			out[d] = p1[d] - p2[d];
-		}
-		return out;
-	}
-	
-	protected float[] subtract(float[] p1, float[] p2, float[] out){
-		int nd = out.length; 
-		for (int d=0; d<nd; d++){
-			out[d] = p1[d] - p2[d];
-		}
-		return out;
-	}
+
+	//protected float[] subtract(float[] p1, float[] p2){
+	//	int nd = p1.length; 
+	//	float[] out = new float[nd];
+	//	for (int d=0; d<nd; d++){
+	//		out[d] = p1[d] - p2[d];
+	//	}
+	//	return out;
+	//}
+	//
+	//protected float[] subtract(float[] p1, float[] p2, float[] out){
+	//	int nd = out.length; 
+	//	for (int d=0; d<nd; d++){
+	//		out[d] = p1[d] - p2[d];
+	//	}
+	//	return out;
+	//}
 
 	public abstract void computeG( float[] pt, DenseMatrix64F mtx);
 

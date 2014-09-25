@@ -28,14 +28,17 @@ public class ThinPlateR2LogRSplineKernelTransformFloat extends KernelTransformFl
 	public ThinPlateR2LogRSplineKernelTransformFloat(){
 		super();
 	}
-
+	
+	public ThinPlateR2LogRSplineKernelTransformFloat( int ndims )
+	{
+		super( ndims );
+	}
+	
 	public ThinPlateR2LogRSplineKernelTransformFloat( int ndims, float[][] srcPts, float[][] tgtPts)
 	{
 		super( ndims, srcPts, tgtPts );
 	}
-
-
-     
+ 
    public ThinPlateR2LogRSplineKernelTransformFloat( float[][] srcPts, float[][] aMatrix, float[] bVector, double[] dMatrixData )
    {
       super( srcPts, aMatrix, bVector, dMatrixData);
@@ -85,5 +88,7 @@ public class ThinPlateR2LogRSplineKernelTransformFloat extends KernelTransformFl
 		}
 		return nrm;
 	}
+
+
 
 }
