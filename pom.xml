@@ -1,48 +1,59 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>jitk</groupId>
-  <artifactId>jitk-tps</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-  <name>JavaITK thin plate spline</name>
-  <description>A java port of the ITK thin plate spline implementation.</description>
-  <dependencies>
-  	<dependency>
-  		<groupId>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>jitk</groupId>
+	<artifactId>jitk-tps</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>JavaITK thin plate spline</name>
+	<description>A java port of the ITK thin plate spline implementation.</description>
+	<dependencies>
+		<dependency>
+			<groupId>
   			com.googlecode.efficient-java-matrix-library
   		</groupId>
-  		<artifactId>ejml</artifactId>
-  		<version>0.24</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>log4j</groupId>
-  		<artifactId>log4j</artifactId>
-  		<version>1.2.17</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>junit</groupId>
-  		<artifactId>junit</artifactId>
-  		<version>4.11</version>
-  		<scope>test</scope>
-  	</dependency>
-  	<dependency>
-  		<groupId>mpicbg-trakem2</groupId>
-  		<artifactId>mpicbg-trakem2</artifactId>
-  		<version>0.6.2-SNAPSHOT</version>
-  	</dependency>
-  </dependencies>
-  <scm>
-  	<url>https://github.com/bogovicj/jitk-tps</url>
-  	<connection>scm:git:git://github.com/bogovicj/jitk-tps</connection>
-  	<developerConnection>scm:git:git@github.com:bogovicj/jitk-tps</developerConnection>
-  	<tag>HEAD</tag>
-  </scm>
-  <issueManagement>
-  	<system>GitHub</system>
-  	<url>https://github.com/bogovicj/jitk-tps/issues</url>
-  </issueManagement>
-  <parent>
-  	<artifactId>pom-mpicbg</artifactId>
-  	<version>0.6.2-SNAPSHOT</version>
-  	<groupId>mpicbg</groupId>
-  </parent>
+			<artifactId>ejml</artifactId>
+			<version>0.24</version>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.17</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>mpicbg-trakem2</artifactId>
+		</dependency>
+	</dependencies>
+	<scm>
+		<url>https://github.com/bogovicj/jitk-tps</url>
+		<connection>scm:git:git://github.com/bogovicj/jitk-tps</connection>
+		<developerConnection>scm:git:git@github.com:bogovicj/jitk-tps</developerConnection>
+		<tag>HEAD</tag>
+	</scm>
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/bogovicj/jitk-tps/issues</url>
+	</issueManagement>
+	<parent>
+		<groupId>sc.fiji</groupId>
+		<artifactId>pom-trakem2</artifactId>
+		<version>1.1.1</version>
+	</parent>
+
+	<repositories>
+		<!-- NB: for project parent -->
+		<repository>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
+		</repository>
+		<repository>
+			<id>JBoss 3rdparty</id>
+			<url>https://repository.jboss.org/nexus/content/repositories/thirdparty-releases</url>
+		</repository>
+	</repositories>
 </project>
