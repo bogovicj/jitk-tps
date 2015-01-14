@@ -48,7 +48,7 @@ public class ThinPlateSplineKernelTransform extends KernelTransform {
       double[] res  = new double[ndims];
       double[] diff = new double[ndims];
 
-      logger.debug("dMatrix: " + dMatrix);
+      //logger.debug("dMatrix: " + dMatrix);
       
       for (int lnd = 0; lnd < nLandmarks; lnd++) {
 

@@ -43,15 +43,6 @@ public class ThinPlateR2LogRSplineKernelTransformFloat extends KernelTransformFl
    {
       super( srcPts, aMatrix, bVector, dMatrixData);
    }
-
-//	@Override
-//	public double computeG( float[] pt ) {
-//
-//		double r = Math.sqrt(normSqrd(pt));
-//		double nrm = r2Logr(r);
-//		return nrm;
-//
-//	}
 	
 	@Override
 	public void computeG(float[] pt, DenseMatrix64F mtx) {

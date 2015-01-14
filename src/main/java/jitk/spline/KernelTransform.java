@@ -23,7 +23,7 @@ import org.ejml.ops.CommonOps;
  */
 public abstract class KernelTransform {
 	
-   protected int ndims;
+	protected int ndims;
 
 	protected DenseMatrix64F gMatrix;
 	protected DenseMatrix64F pMatrix;
@@ -69,7 +69,7 @@ public abstract class KernelTransform {
 	 * Constructor
 	 */
 	public KernelTransform(int ndims){
-		logger.info("initializing");
+		//logger.info("initializing");
 
 		this.ndims = ndims;
 
@@ -203,7 +203,7 @@ public abstract class KernelTransform {
    protected void expandLandmarkContainers()
    {
 	   int newSize = containerSize + (int) Math.round( increaseRaio * containerSize );
-	   logger.debug("increasing container size from " + containerSize  + " to " + newSize );
+	   //logger.debug("increasing container size from " + containerSize  + " to " + newSize );
 	   double[][] NEWsourceLandmarks = new double[ndims][newSize];
 	   double[][] NEWtargetLandmarks = new double[ndims][newSize];
 	   
@@ -292,7 +292,7 @@ public abstract class KernelTransform {
 		// TODO: check for bugs - is l1 ever used?
 		//double[] l1 = null;
 		
-		logger.debug("dMatrix: " + dMatrix);
+		//logger.debug("dMatrix: " + dMatrix);
 
 		for( int lnd=0; lnd<nLandmarks; lnd++){
 			
@@ -334,15 +334,15 @@ public abstract class KernelTransform {
 		computeL();
 		computeY();
 
-		logger.debug(" lMatrix: " + lMatrix);
-		logger.debug(" yMatrix: " + yMatrix);
+		//logger.debug(" lMatrix: " + lMatrix);
+		//logger.debug(" yMatrix: " + yMatrix);
 
 		// solve linear system 
 		LinearSolver<DenseMatrix64F> solver =  LinearSolverFactory.pseudoInverse(true);
 		solver.setA(lMatrix);
 		solver.solve(yMatrix, wMatrix);
 
-		logger.debug("wMatrix:\n" + wMatrix );
+		//logger.debug("wMatrix:\n" + wMatrix );
 		
 		reorganizeW();
 		
@@ -418,7 +418,7 @@ public abstract class KernelTransform {
 				CommonOps.insert(G, kMatrix, j * ndims, i * ndims);
 			}
 		}
-		logger.debug(" kMatrix: \n" + kMatrix + "\n");
+		//logger.debug(" kMatrix: \n" + kMatrix + "\n");
 	}
 
 
@@ -459,7 +459,7 @@ public abstract class KernelTransform {
 				ci++;
 			}	
 		}
-		logger.debug(" dMatrix:\n" + dMatrix);
+		//logger.debug(" dMatrix:\n" + dMatrix);
 
       if( computeAffine )
       {
@@ -468,14 +468,14 @@ public abstract class KernelTransform {
             aMatrix[i][j] =  wMatrix.get(ci,0);
             ci++;
          }
-         logger.debug(" affine:\n" + XfmUtils.printArray(aMatrix));
+         //logger.debug(" affine:\n" + XfmUtils.printArray(aMatrix));
 
          // the translation part of the transform
          for( int k=0; k<ndims; k++) {
             bVector[k] = wMatrix.get(ci, 0);
             ci++;
          }
-         logger.debug(" b:\n" + XfmUtils.printArray(bVector) +"\n");
+         //logger.debug(" b:\n" + XfmUtils.printArray(bVector) +"\n");
       }
 		wMatrix = null;
 		
@@ -516,10 +516,10 @@ public abstract class KernelTransform {
 	 */
 	public double[] transformPoint(double[] pt){
 		
-	  logger.trace("transforming pt:  " + XfmUtils.printArray(pt));
+	  //logger.trace("transforming pt:  " + XfmUtils.printArray(pt));
 	  
 	  double[] result = computeDeformationContribution( pt );
-	  logger.trace("res after def:   " + XfmUtils.printArray(result));
+	  //logger.trace("res after def:   " + XfmUtils.printArray(result));
       if( aMatrix != null )
       {
     	
@@ -528,7 +528,7 @@ public abstract class KernelTransform {
             result[i] += aMatrix[i][j] * pt[j];
          }
       }
-      logger.trace("res after aff:   " + XfmUtils.printArray(result));
+      //logger.trace("res after aff:   " + XfmUtils.printArray(result));
 
       if( bVector != null)
       {
@@ -542,7 +542,7 @@ public abstract class KernelTransform {
     		  result[i] += pt[i];
     	  }
       }
-      logger.trace("res after trn:   " + XfmUtils.printArray(result));
+      //logger.trace("res after trn:   " + XfmUtils.printArray(result));
       
       return result;
 	}

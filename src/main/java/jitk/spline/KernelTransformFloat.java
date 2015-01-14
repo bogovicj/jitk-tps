@@ -68,7 +68,7 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
     * Constructor
     */
 	public KernelTransformFloat(int ndims){
-		logger.info("initializing");
+		//logger.info("initializing");
 		
 		this.ndims = ndims;
 
@@ -226,7 +226,7 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 	protected void expandLandmarkContainers()
 	{
 		int newSize = containerSize + (int) Math.round( increaseRaio * containerSize );
-		logger.debug("increasing container size from " + containerSize  + " to " + newSize );
+		//logger.debug("increasing container size from " + containerSize  + " to " + newSize );
 		float[][] NEWsourceLandmarks = new float[ndims][newSize];
 		float[][] NEWtargetLandmarks = new float[ndims][newSize];
 
@@ -310,7 +310,7 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 		// TODO: check for bugs - is l1 ever used?
 		//double[] l1 = null;
 		
-		logger.debug("dMatrix: " + dMatrix);
+		//logger.debug("dMatrix: " + dMatrix);
 
 		for( int lnd=0; lnd<nLandmarks; lnd++){
 			
@@ -361,8 +361,8 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 		computeL();
 		computeY();
 
-		logger.debug(" lMatrix: " + lMatrix);
-		logger.debug(" yMatrix: " + yMatrix);
+		//logger.debug(" lMatrix: " + lMatrix);
+		//logger.debug(" yMatrix: " + yMatrix);
 
 		// solve linear system 
 		LinearSolver<DenseMatrix64F> solver = null;
@@ -371,11 +371,11 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 		// linear solver otherwise
 		if( nLandmarks < ndims*ndims )
 		{
-			logger.debug("pseudo - inverse solver");
+			//logger.debug("pseudo - inverse solver");
 			solver =  LinearSolverFactory.pseudoInverse(true);
 		}else
 		{
-			logger.debug("linear solver");
+			//logger.debug("linear solver");
 			solver =  LinearSolverFactory.linear(lMatrix.numCols);
 		}
 		
@@ -384,7 +384,7 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 		solver.setA(lMatrix);
 		solver.solve(yMatrix, wMatrix);
 
-		logger.debug("wMatrix:\n" + wMatrix );
+		//logger.debug("wMatrix:\n" + wMatrix );
 		
 		reorganizeW();
 		
@@ -452,7 +452,7 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 				CommonOps.insert(G, lMatrix, j * ndims, i * ndims);
 			}
 		}
-		logger.debug(" kMatrix: \n" + lMatrix + "\n");
+		//logger.debug(" kMatrix: \n" + lMatrix + "\n");
 	}
 
 
@@ -490,7 +490,7 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 				ci++;
 			}	
 		}
-		logger.debug(" dMatrix:\n" + dMatrix);
+		//logger.debug(" dMatrix:\n" + dMatrix);
 
       if( computeAffine ) 
       {
@@ -499,17 +499,17 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
             aMatrix[i][j] =  (float)wMatrix.get(ci,0);
             ci++;
          }
-         logger.debug(" affine:\n" + XfmUtils.printArray(aMatrix));
+         //logger.debug(" affine:\n" + XfmUtils.printArray(aMatrix));
 
          // the translation part of the transform
          for( int k=0; k<ndims; k++) {
             bVector[k] = (float)wMatrix.get(ci, 0);
             ci++;
          }
-		   logger.debug(" b:\n" + XfmUtils.printArray(bVector) +"\n");
+		   //logger.debug(" b:\n" + XfmUtils.printArray(bVector) +"\n");
       }
 
-      	logger.debug(" ");
+      	//logger.debug(" ");
       	
 		wMatrix = null;
 		yMatrix = null;
@@ -551,10 +551,10 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 	 */
    public float[] transformPoint(float[] pt){
 		
-	  logger.trace("transforming pt:  " + XfmUtils.printArray(pt));
+	  //logger.trace("transforming pt:  " + XfmUtils.printArray(pt));
 	  float[] result = computeDeformationContribution( pt );
 	  
-	  logger.trace("res after def:   " + XfmUtils.printArray(result));
+	  //logger.trace("res after def:   " + XfmUtils.printArray(result));
 	  
       if(aMatrix != null){
          // affine part
@@ -562,7 +562,7 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
             result[i] += aMatrix[i][j] * pt[j];
          }
       }
-      logger.trace("res after aff:   " + XfmUtils.printArray(result));
+      //logger.trace("res after aff:   " + XfmUtils.printArray(result));
       
       if(bVector != null){
          // translational part
@@ -575,7 +575,7 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
     		  result[i] += pt[i];
     	  }
       }
-      logger.trace("res after trn:   " + XfmUtils.printArray(result));
+      //logger.trace("res after trn:   " + XfmUtils.printArray(result));
 
       return result;
 	}
@@ -624,7 +624,6 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 		transformInPlace( location );		
 	}
 	
-
 	/**
 	 * Computes the displacement between the i^th and j^th source points.
 	 *

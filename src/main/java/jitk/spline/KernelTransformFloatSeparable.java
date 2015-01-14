@@ -14,8 +14,8 @@ import org.ejml.ops.CommonOps;
  * Ported from itk's itkKernelTransform.hxx
  * <p>
  * M. H. Davis, a Khotanzad, D. P. Flamig, and S. E. Harms, 
- * âA physics-based coordinate transformation for 3-D image matching.,
- * IEEE Trans. Med. Imaging, vol. 16, no. 3, pp. 317â28, Jun. 1997. 
+ * ï¿½A physics-based coordinate transformation for 3-D image matching.,
+ * IEEE Trans. Med. Imaging, vol. 16, no. 3, pp. 317ï¿½28, Jun. 1997. 
  * 
  * The process() method is the correct 
  *  
@@ -64,7 +64,7 @@ public abstract class KernelTransformFloatSeparable {
     * Constructor
     */
 	public KernelTransformFloatSeparable(int ndims){
-		logger.info("initializing");
+		//logger.info("initializing");
 		
 		this.ndims = ndims;
 
@@ -224,8 +224,8 @@ public abstract class KernelTransformFloatSeparable {
       computeAffineL();   
       computeY();
 
-      logger.debug("lMatrix:\n " + lMatrix + "\n");
-      logger.debug("yMatrix:\n " + yMatrix + "\n");
+      //logger.debug("lMatrix:\n " + lMatrix + "\n");
+      //logger.debug("yMatrix:\n " + yMatrix + "\n");
 
       LinearSolver<DenseMatrix64F> solver = 
          //LinearSolverFactory.general(lMatrix.numRows, lMatrix.numCols);
@@ -233,7 +233,7 @@ public abstract class KernelTransformFloatSeparable {
 
       solver.setA(lMatrix);
       solver.solve(yMatrix, wMatrix);
-      logger.debug("wMatrix: " + wMatrix + "\n");
+      //logger.debug("wMatrix: " + wMatrix + "\n");
 
       reorganizeWAffine();
 
@@ -289,8 +289,8 @@ public abstract class KernelTransformFloatSeparable {
 
       }
 
-      logger.debug(" affine:\n" + printArray(aMatrix));
-      logger.debug(" b:\n" + printArray(bVector) +"\n");
+      //logger.debug(" affine:\n" + printArray(aMatrix));
+      //logger.debug(" b:\n" + printArray(bVector) +"\n");
 
 
 		wMatrix = null;
@@ -310,7 +310,7 @@ public abstract class KernelTransformFloatSeparable {
 		// TODO: check for bugs - is l1 ever used?
 		//double[] l1 = null;
 		
-		logger.debug("dMatrix: " + dMatrix);
+		//logger.debug("dMatrix: " + dMatrix);
 
 		for( int lnd=0; lnd<nLandmarks; lnd++){
 			
@@ -360,9 +360,9 @@ public abstract class KernelTransformFloatSeparable {
 		
 		initMatricesDef();
 	
-      logger.debug("lMatrix:\n " + lMatrix + "\n");
-      logger.debug("yMatrix:\n " + yMatrix + "\n");
-      logger.debug("wMatrix:\n " + wMatrix + "\n");
+      //logger.debug("lMatrix:\n " + lMatrix + "\n");
+      //logger.debug("yMatrix:\n " + yMatrix + "\n");
+      //logger.debug("wMatrix:\n " + wMatrix + "\n");
 
       // assume this has already happened
 		//computeD(); // only compute D once
@@ -377,8 +377,8 @@ public abstract class KernelTransformFloatSeparable {
 			computeK(d);
 			computeY(d);
 
-			logger.debug(" lMatrix: " + lMatrix);
-			logger.debug(" yMatrix: " + yMatrix);
+			//logger.debug(" lMatrix: " + lMatrix);
+			//logger.debug(" yMatrix: " + yMatrix);
 
 			// solve linear system 
 			LinearSolver<DenseMatrix64F> solver = null;
@@ -387,11 +387,11 @@ public abstract class KernelTransformFloatSeparable {
 			// linear solver otherwise
 			if( nLandmarks < ndims*ndims )
 			{
-				logger.debug("pseudo - inverse solver");
+				//logger.debug("pseudo - inverse solver");
 				solver =  LinearSolverFactory.pseudoInverse(true);
 			}else
 			{
-				logger.debug("linear solver");
+				//logger.debug("linear solver");
 				solver =  LinearSolverFactory.linear(lMatrix.numCols);
 			}
 
@@ -401,7 +401,7 @@ public abstract class KernelTransformFloatSeparable {
 			solver.setA(lMatrix);
 			solver.solve(yMatrix, wMatrix);
 
-			logger.debug("wMatrix:\n" + wMatrix );
+			//logger.debug("wMatrix:\n" + wMatrix );
 
 			reorganizeW(d);
 		}
@@ -429,7 +429,7 @@ public abstract class KernelTransformFloatSeparable {
 				lMatrix.set( j, i, val );
 			}
 		}
-		logger.debug(" kMatrix: \n" + lMatrix + "\n");
+		//logger.debug(" kMatrix: \n" + lMatrix + "\n");
 	}
 
 	protected DenseMatrix64F computeReflexiveG(){
@@ -446,7 +446,7 @@ public abstract class KernelTransformFloatSeparable {
 		{
 		   for (int d=0; d<ndims; d++) 
          {
-			   yMatrix.set( k, 0, displacement[i][d]);
+			yMatrix.set( k, 0, displacement[i][d]);
             k++;
          }
 		}
@@ -477,7 +477,7 @@ public abstract class KernelTransformFloatSeparable {
 			dMatrix.set(dim, lnd, wMatrix.get(ci, 0));
 			ci++;
 		}
-		logger.debug(" dMatrix:\n" + dMatrix);
+		//logger.debug(" dMatrix:\n" + dMatrix);
 
       if( computeAffine ) 
       {
@@ -486,17 +486,17 @@ public abstract class KernelTransformFloatSeparable {
             aMatrix[dim][j] =  (float)wMatrix.get(ci,0);
             ci++;
          }
-         logger.debug(" affine:\n" + printArray(aMatrix));
+         //logger.debug(" affine:\n" + printArray(aMatrix));
 
          // the translation part of the transform
          
          bVector[dim] = (float)wMatrix.get(ci, 0);
          ci++;
 
-		   logger.debug(" b:\n" + printArray(bVector) +"\n");
+		 //logger.debug(" b:\n" + printArray(bVector) +"\n");
       }
 
-      	logger.debug(" ");
+      	//logger.debug(" ");
       	
 		//wMatrix = null;
 		//yMatrix = null;
@@ -556,10 +556,10 @@ public abstract class KernelTransformFloatSeparable {
 	 */
    public float[] transformPoint(float[] pt){
 		
-	  logger.trace("transforming pt:  " + printArray(pt));
+	  //logger.trace("transforming pt:  " + printArray(pt));
 	  float[] result = computeDeformationContribution( pt );
 	  
-	  logger.trace("res after def:   " + printArray(result));
+	  //logger.trace("res after def:   " + printArray(result));
 	  
       if(aMatrix != null){
          // affine part
@@ -567,7 +567,7 @@ public abstract class KernelTransformFloatSeparable {
             result[i] += aMatrix[i][j] * pt[j];
          }
       }
-      logger.trace("res after aff:   " + printArray(result));
+      //logger.trace("res after aff:   " + printArray(result));
       
       if(bVector != null){
          // translational part
@@ -580,9 +580,9 @@ public abstract class KernelTransformFloatSeparable {
     		  result[i] += pt[i];
     	  }
       }
-      logger.trace("res after trn:   " + printArray(result));
+      //logger.trace("res after trn:   " + printArray(result));
 
-		return result;
+      return result;
 	}
 
    /**
