@@ -603,7 +603,7 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 	 */
 	public void transformInPlace(final float[] pt) {
 
-		computeDeformationContribution(pt, tmp);
+		transform(pt, tmp);
 
 		for (int i = 0; i < ndims; ++i) {
 			pt[i] = tmp[i];
