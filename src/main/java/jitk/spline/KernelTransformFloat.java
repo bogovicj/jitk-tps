@@ -29,7 +29,7 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 
     /* temporary vector for doing calculations */
     protected float[] tmp;
-    protected float[] tmp1;
+    protected float[] tmpDisplacement;
 
 	protected DenseMatrix64F gMatrix;
 	protected DenseMatrix64F dMatrix;
@@ -76,7 +76,8 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 
 		this.ndims = ndims;
 		tmp = new float[ndims];
-
+		tmpDisplacement = new float[ndims];
+		
 		gMatrix = new DenseMatrix64F(ndims, ndims);
 
 		I = new DenseMatrix64F(ndims, ndims);
@@ -116,9 +117,10 @@ public abstract class KernelTransformFloat implements CoordinateTransform {
 			final float[][] aMatrix, final float[] bVector,
 			final double[] dMatrixData) {
 		this.ndims = srcPts.length;
-		tmp = new float[ndims];
 		this.nLandmarks = srcPts[0].length;
-
+		
+		tmp = new float[ndims];
+		tmpDisplacement = new float[ndims];
 		gMatrix = new DenseMatrix64F(ndims, ndims);
 
 		this.sourceLandmarks = srcPts;

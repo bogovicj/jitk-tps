@@ -23,14 +23,11 @@ public class ThinPlateR2LogRSplineKernelTransformFloat extends KernelTransformFl
 
 	static final protected double EPS = 1e-8;
 
-	protected float[] diff;
-
 	protected static Logger logger = LogManager.getLogger(ThinPlateR2LogRSplineKernelTransformFloat.class.getName());
 
 	public ThinPlateR2LogRSplineKernelTransformFloat( final int ndims )
 	{
 		super( ndims );
-		diff = new float[ndims];
 	}
 
 	public ThinPlateR2LogRSplineKernelTransformFloat( final int ndims, final float[][] srcPts, final float[][] tgtPts)
@@ -54,32 +51,31 @@ public class ThinPlateR2LogRSplineKernelTransformFloat extends KernelTransformFl
 	}
 
 	@Override
-	public void computeDeformationContribution(final float[] thispt) {
+	public void computeDeformationContribution(final float[] thispt,
+			final float[] result) {
 
 		for (int i = 0; i < ndims; ++i) {
-			tmp[i] = 0;
-			diff[i] = 0;
+			result[i] = 0;
+			tmpDisplacement[i] = 0;
 		}
 
 		for (int lnd = 0; lnd < nLandmarks; lnd++) {
 
-			srcPtDisplacement(lnd, thispt, diff);
-			final double nrm = r2Logr(Math.sqrt(normSqrd(diff)));
+			srcPtDisplacement(lnd, thispt, tmpDisplacement);
+			final double nrm = r2Logr(Math.sqrt(normSqrd(tmpDisplacement)));
 
 			for (int d = 0; d < ndims; d++) {
-				tmp[d] += nrm * dMatrix.get(d, lnd);
+				result[d] += nrm * dMatrix.get(d, lnd);
 			}
 		}
 	}
 
-	private double r2Logr( final double r ){
+	private double r2Logr(final double r) {
 		double nrm = 0;
-		if( r > EPS){
+		if (r > EPS) {
 			nrm = r * r * Math.log(r);
 		}
 		return nrm;
 	}
-
-
 
 }
