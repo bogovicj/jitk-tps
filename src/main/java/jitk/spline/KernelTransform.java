@@ -2,7 +2,7 @@ package jitk.spline;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.ejml.data.*;
+import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.LinearSolver;
 import org.ejml.factory.LinearSolverFactory;
 import org.ejml.ops.CommonOps;
@@ -13,16 +13,16 @@ import org.ejml.ops.CommonOps;
  * for example, {@link ThinPlateSplineKernelTransform}.
  * Ported from itk's itkKernelTransform.hxx
  * <p>
- * M. H. Davis, a Khotanzad, D. P. Flamig, and S. E. Harms, 
- * “A physics-based coordinate transformation for 3-D image matching.,” 
- * IEEE Trans. Med. Imaging, vol. 16, no. 3, pp. 317–28, Jun. 1997. 
+ * M. H. Davis, a Khotanzad, D. P. Flamig, and S. E. Harms,
+ * “A physics-based coordinate transformation for 3-D image matching.,”
+ * IEEE Trans. Med. Imaging, vol. 16, no. 3, pp. 317–28, Jun. 1997.
  *
  * @author Kitware (ITK)
  * @author John Bogovic
  *
  */
 public abstract class KernelTransform {
-	
+
 	protected int ndims;
 
 	protected DenseMatrix64F gMatrix;
@@ -32,16 +32,16 @@ public abstract class KernelTransform {
 	protected DenseMatrix64F wMatrix;
 	protected DenseMatrix64F lMatrix;
 	protected DenseMatrix64F yMatrix;
-	
+
 	protected DenseMatrix64F I;
 
 	protected double[][] aMatrix;
 	protected double[] bVector;
-	
+
 	protected double 	stiffness = 0.0; // reasonable values take the range [0.0, 0.5]
-	protected boolean	wMatrixComputeD = false; 
-	protected boolean	computeAffine   = true; 
-	
+	protected boolean	wMatrixComputeD = false;
+	protected boolean	computeAffine   = true;
+
 	protected int 		      nLandmarks;
 	protected double[][]    sourceLandmarks;
 	protected double[][]    targetLandmarks;
@@ -52,23 +52,23 @@ public abstract class KernelTransform {
 	protected float[] 	   weightsF;  // TODO: make the weights do something :-P
 
 	protected double[][] displacement; // TODO: do we need this? yMatrix seems to hold the same values
-	
-	
+
+
 	// parameters relating
 	protected int 	 initialContainerSize = 100;
 	protected double increaseRaio = 0.25;
 	protected int 	 containerSize;
-	
+
 	protected static Logger logger = LogManager.getLogger(KernelTransform.class.getName());
-	
+
 	//TODO: Many of these methods could be optimized by performing them without
-	// explicit construction / multiplication of the matrices. 
+	// explicit construction / multiplication of the matrices.
 	public KernelTransform(){}
 
 	/*
 	 * Constructor
 	 */
-	public KernelTransform(int ndims){
+	public KernelTransform(final int ndims){
 		//logger.info("initializing");
 
 		this.ndims = ndims;
@@ -79,7 +79,7 @@ public abstract class KernelTransform {
 		for (int i=0; i<ndims; i++){
 			I.set(i,i,1);
 		}
-		
+
 		nLandmarks = 0;
 		sourceLandmarks = new double[ndims][initialContainerSize];
 		targetLandmarks = new double[ndims][initialContainerSize];
@@ -87,31 +87,40 @@ public abstract class KernelTransform {
 	}
 
 	/*
-	 * Constructor with point matches 
+	 * Constructor with point matches
 	 */
-	public KernelTransform( int ndims, double[][] srcPts, double[][] tgtPts){
+	public KernelTransform( final int ndims, final double[][] srcPts, final double[][] tgtPts){
+		this(ndims);
+		setLandmarks(srcPts, tgtPts);
+	}
+	/*
+	 * Constructor with point matches
+	 */
+	public KernelTransform( final int ndims, final float[][] srcPts, final float[][] tgtPts){
 		this(ndims);
 		setLandmarks(srcPts, tgtPts);
 	}
 
 	/*
-	 * Constructor with weighted point matches 
+	 * Constructor with weighted point matches
 	 */
-	public KernelTransform( int ndims, double[][] srcPts, double[][] tgtPts, double[] weights){
+	public KernelTransform( final int ndims, final double[][] srcPts, final double[][] tgtPts, final double[] weights){
 		this(ndims);
 		setLandmarks(srcPts, tgtPts);
 		setWeights( weights );
 	}
-	
+
    /**
     * Constructor with transformation parameters.
     * aMatrix and bVector are allowed to be null
     */
-   public KernelTransform( double[][] srcPts, double[][] aMatrix, double[] bVector, double[] dMatrixData )
+   public KernelTransform( final double[][] srcPts, final double[][] aMatrix, final double[] bVector, final double[] dMatrixData )
    {
 
       this.ndims = srcPts.length;
       this.nLandmarks = srcPts[0].length;
+
+      gMatrix = new DenseMatrix64F(ndims, ndims);
 
       this.sourceLandmarks = srcPts;
       this.aMatrix = aMatrix;
@@ -123,7 +132,7 @@ public abstract class KernelTransform {
    }
 
    public int getNumLandmarks(){
-      return this.nLandmarks; 
+      return this.nLandmarks;
    }
 
    public int getNumDims(){
@@ -153,7 +162,7 @@ public abstract class KernelTransform {
     * @param sourcePts the collection of source points
     * @param targetPts the collection of target/destination points
     */
-   public void setLandmarks( double[][] srcPts, double[][] tgtPts) throws IllegalArgumentException{
+   public void setLandmarks( final double[][] srcPts, final double[][] tgtPts) throws IllegalArgumentException{
 
 	   nLandmarks = srcPts[0].length;
 
@@ -164,7 +173,7 @@ public abstract class KernelTransform {
 		   logger.error("Source and target landmark lists must have " + ndims + " spatial dimentions.");
 		   return;
 	   }
-	   if( 
+	   if(
 			   srcPts[0].length != nLandmarks ||
 			   tgtPts[0].length != nLandmarks )
 	   {
@@ -177,18 +186,49 @@ public abstract class KernelTransform {
 
    }
 
-   public void addMatch( float[] source, float[] target )
+   /*
+    * Sets the source and target landmarks for this KernelTransform object
+    *
+    * @param sourcePts the collection of source points
+    * @param targetPts the collection of target/destination points
+    */
+   public void setLandmarks( final float[][] srcPts, final float[][] tgtPts) throws IllegalArgumentException{
+
+	   assert srcPts.length == ndims && tgtPts.length == ndims : "Source and target landmark lists must have " + ndims + " spatial dimentions.";
+
+	   nLandmarks = srcPts[0].length;
+
+	   if(
+			   srcPts[0].length != nLandmarks ||
+			   tgtPts[0].length != nLandmarks )
+	   {
+		   logger.error("Source and target landmark lists must be the same size");
+		   return;
+	   }
+
+	   sourceLandmarks = new double[ndims][nLandmarks];
+	   targetLandmarks = new double[ndims][nLandmarks];
+
+	   for (int d = 0; d < ndims; ++d) {
+		   for (int i = 0; i < nLandmarks; ++i) {
+			   sourceLandmarks[d][i] = srcPts[d][i];
+			   targetLandmarks[d][i] = tgtPts[d][i];
+		   }
+	   }
+   }
+
+   public void addMatch( final float[] source, final float[] target )
    {
-	   double[] src = new double[source.length];
-	   double[] tgt = new double[target.length];
+	   final double[] src = new double[source.length];
+	   final double[] tgt = new double[target.length];
 	   for(int i=0; i<source.length; i++){
 		   src[i]=source[i];
 		   tgt[i]=target[i];
 	   }
 	   addMatch( src, tgt );
    }
-   
-   public void addMatch( double[] source, double[] target )
+
+   public void addMatch( final double[] source, final double[] target )
    {
 	   if( nLandmarks + 1 > containerSize ){
 		   expandLandmarkContainers();
@@ -199,29 +239,29 @@ public abstract class KernelTransform {
 	   }
 	   nLandmarks++;
    }
-   
+
    protected void expandLandmarkContainers()
    {
-	   int newSize = containerSize + (int) Math.round( increaseRaio * containerSize );
+	   final int newSize = containerSize + (int) Math.round( increaseRaio * containerSize );
 	   //logger.debug("increasing container size from " + containerSize  + " to " + newSize );
-	   double[][] NEWsourceLandmarks = new double[ndims][newSize];
-	   double[][] NEWtargetLandmarks = new double[ndims][newSize];
-	   
+	   final double[][] NEWsourceLandmarks = new double[ndims][newSize];
+	   final double[][] NEWtargetLandmarks = new double[ndims][newSize];
+
 	   for( int d = 0; d<ndims; d++) for( int n = 0; n<nLandmarks; n++){
 		   NEWsourceLandmarks[d][n] = sourceLandmarks[d][n];
 		   NEWtargetLandmarks[d][n] = targetLandmarks[d][n];
 	   }
-	   
+
 	   containerSize   = newSize;
 	   sourceLandmarks = NEWsourceLandmarks;
 	   targetLandmarks = NEWtargetLandmarks;
    }
 
    /**
-    * Sets the weights.  Checks that the length matches 
+    * Sets the weights.  Checks that the length matches
     * the number of landmarks.
     */
-   private void setWeights( double[] weights ){
+   private void setWeights( final double[] weights ){
 	   // make sure the length matches number
 	   // of landmarks
 	   if( weights==null){
@@ -230,17 +270,17 @@ public abstract class KernelTransform {
 	   if( weights.length != this.nLandmarks ){
 		   this.weights = weights;
 	   }else{
-		   logger.error( "weights have length (" + weights.length  + 
+		   logger.error( "weights have length (" + weights.length  +
 				   ") but tmust have length equal to number of landmarks " +
 				   this.nLandmarks );
 	   }
    }
 
-   public void setDoAffine(boolean estimateAffine)
-   { 
-      this.computeAffine = estimateAffine; 
-   } 
-   
+   public void setDoAffine(final boolean estimateAffine)
+   {
+      this.computeAffine = estimateAffine;
+   }
+
    private void initMatrices()
    {
 
@@ -280,24 +320,24 @@ public abstract class KernelTransform {
 	   return gMatrix;
    }
 
-	protected double[] computeDeformationContribution( double[] thispt ){
+	protected double[] computeDeformationContribution( final double[] thispt ){
 
-		double[] result = new double[ndims];
-		computeDeformationContribution( thispt, result ); 
+		final double[] result = new double[ndims];
+		computeDeformationContribution( thispt, result );
 		return result;
 	}
 
-	public double[] computeDeformationContribution( double[] thispt, double[] result ){
+	public double[] computeDeformationContribution( final double[] thispt, final double[] result ){
 
 		// TODO: check for bugs - is l1 ever used?
 		//double[] l1 = null;
-		
+
 		//logger.debug("dMatrix: " + dMatrix);
 
 		for( int lnd=0; lnd<nLandmarks; lnd++){
-			
+
 			computeG( result, gMatrix );
-			
+
 			for (int i=0; i<ndims; i++) for (int j=0; j<ndims; j++){
 				result[j] += gMatrix.get(i,j) * dMatrix.get(i,lnd);
 			}
@@ -307,14 +347,14 @@ public abstract class KernelTransform {
 
 	protected void computeD(){
 		for( int d=0; d<ndims; d++ ) for( int i=0; i<nLandmarks; i++ ){
-			displacement[i][d] = targetLandmarks[d][i] - sourceLandmarks[d][i]; 
+			displacement[i][d] = targetLandmarks[d][i] - sourceLandmarks[d][i];
 		}
-	}	
+	}
 
-	protected double normSqrd( double[] v ){
+	protected double normSqrd( final double[] v ){
      double nrm = 0;
       for(int i=0; i<v.length; i++){
-         nrm += v[i]*v[i]; 
+         nrm += v[i]*v[i];
       }
       return nrm;
    }
@@ -328,7 +368,7 @@ public abstract class KernelTransform {
 	 *
 	 */
 	public void computeW(){
-		
+
 		initMatrices();
 
 		computeL();
@@ -337,15 +377,15 @@ public abstract class KernelTransform {
 		//logger.debug(" lMatrix: " + lMatrix);
 		//logger.debug(" yMatrix: " + yMatrix);
 
-		// solve linear system 
-		LinearSolver<DenseMatrix64F> solver =  LinearSolverFactory.pseudoInverse(true);
+		// solve linear system
+		final LinearSolver<DenseMatrix64F> solver =  LinearSolverFactory.pseudoInverse(true);
 		solver.setA(lMatrix);
 		solver.solve(yMatrix, wMatrix);
 
 		//logger.debug("wMatrix:\n" + wMatrix );
-		
+
 		reorganizeW();
-		
+
 	}
 
 
@@ -364,22 +404,22 @@ public abstract class KernelTransform {
 
          CommonOps.insert( pMatrix, lMatrix, kMatrix.getNumRows(), 0 );
          CommonOps.insert( kMatrix, lMatrix, 0, 0 );
-         // P matrix should be zero if points are already affinely aligned 
+         // P matrix should be zero if points are already affinely aligned
          // bottom left O2 is already zeros after initializing 'lMatrix'
       }
       else
       {
-         // in this case the L matrix 
+         // in this case the L matrix
          // consists only of the K block.
          lMatrix = kMatrix;
       }
-		
-      
+
+
 	}
 
 	protected void computeP(){
-		
-		DenseMatrix64F tmp = new DenseMatrix64F(ndims,ndims);
+
+		final DenseMatrix64F tmp = new DenseMatrix64F(ndims,ndims);
 
 		for( int i=0; i<nLandmarks; i++ ){
 
@@ -402,11 +442,11 @@ public abstract class KernelTransform {
 
 		computeD();
 
-		double[] res = new double[ndims];
+		final double[] res = new double[ndims];
 
 		for( int i=0; i<nLandmarks; i++ ){
 
-			DenseMatrix64F G = computeReflexiveG();
+			final DenseMatrix64F G = computeReflexiveG();
 			CommonOps.insert(G, kMatrix, i * ndims, i * ndims);
 
 			for( int j = i+1; j<nLandmarks; j++ ){
@@ -449,7 +489,7 @@ public abstract class KernelTransform {
 	 * portions of the transformation, respectively.
 	 */
 	protected void reorganizeW(){
-		
+
 		int ci = 0;
 
 		// the deformable (non-affine) part of the transform
@@ -457,7 +497,7 @@ public abstract class KernelTransform {
 			for (int i=0; i<ndims; i++) {
 				dMatrix.set(i, lnd, wMatrix.get(ci, 0));
 				ci++;
-			}	
+			}
 		}
 		//logger.debug(" dMatrix:\n" + dMatrix);
 
@@ -478,20 +518,20 @@ public abstract class KernelTransform {
          //logger.debug(" b:\n" + XfmUtils.printArray(bVector) +"\n");
       }
 		wMatrix = null;
-		
+
 	}
 
 
    /**
-    * Transforms the input point according to the affine part of 
-    * the thin plate spline stored by this object.  
+    * Transforms the input point according to the affine part of
+    * the thin plate spline stored by this object.
     *
     * @param pt the point to be transformed
     * @return the transformed point
     */
-	public double[] transformPointAffine(double[] pt){
+	public double[] transformPointAffine(final double[] pt){
 
-      double[] result = new double[ndims];
+      final double[] result = new double[ndims];
       // affine part
 		for(int i=0; i<ndims; i++){
 			for(int j=0; j<ndims; j++){
@@ -509,20 +549,20 @@ public abstract class KernelTransform {
 
 	/**
 	 * Transforms the input point according to the
-	 * thin plate spline stored by this object.  
+	 * thin plate spline stored by this object.
 	 *
 	 * @param pt the point to be transformed
 	 * @return the transformed point
 	 */
-	public double[] transformPoint(double[] pt){
-		
+	public double[] transformPoint(final double[] pt){
+
 	  //logger.trace("transforming pt:  " + XfmUtils.printArray(pt));
-	  
-	  double[] result = computeDeformationContribution( pt );
+
+	  final double[] result = computeDeformationContribution( pt );
 	  //logger.trace("res after def:   " + XfmUtils.printArray(result));
       if( aMatrix != null )
       {
-    	
+
          // affine part
          for (int i = 0; i < ndims; i++) for (int j = 0; j < ndims; j++) {
             result[i] += aMatrix[i][j] * pt[j];
@@ -543,36 +583,47 @@ public abstract class KernelTransform {
     	  }
       }
       //logger.trace("res after trn:   " + XfmUtils.printArray(result));
-      
+
       return result;
 	}
 
 	/**
 	 * Transforms the input point according to the
-	 * thin plate spline stored by this object.  
+	 * thin plate spline stored by this object.
 	 *
 	 * @param pt the point to be transformed
 	 * @return the transformed point
 	 */
-	public float[] transformPoint(float[] ptIn){ //TODO this implementation is ugly as is
-	
-      double[] pt = new double[ptIn.length];
-      for (int i = 0; i < pt.length; i++){ pt[i] = ptIn[i]; }
-      double[] ptOut = transformPoint(pt);
+	public float[] transformPoint(final float[] ptIn){ //TODO this implementation is ugly as is
 
-      float[] result = new float[pt.length];
+      final double[] pt = new double[ptIn.length];
+      for (int i = 0; i < pt.length; i++){ pt[i] = ptIn[i]; }
+      final double[] ptOut = transformPoint(pt);
+
+      final float[] result = new float[pt.length];
       for (int i = 0; i < pt.length; i++){ result[i] = (float)ptOut[i]; }
 
       return result;
 	}
-	
+
+	public void transformInPlace(final float[] ptIn){ //TODO this implementation is ugly as is
+
+      final double[] pt = new double[ptIn.length];
+      for (int i = 0; i < pt.length; i++){ pt[i] = ptIn[i]; }
+      final double[] ptOut = transformPoint(pt);
+
+		for (int i = 0; i < pt.length; i++) {
+			ptIn[i] = (float) ptOut[i];
+		}
+	}
+
 	/**
 	 * Computes the displacement between the i^th and j^th source points.
 	 *
 	 * Stores the result in the input array 'res'
 	 * Does not validate inputs.
 	 */
-	protected void srcPtDisplacement(int i, int j, double[] res)
+	protected void srcPtDisplacement(final int i, final int j, final double[] res)
 	{
 		for( int d=0; d<ndims; d++ ){
 			res[d] = sourceLandmarks[d][i] - sourceLandmarks[d][j];
@@ -581,12 +632,12 @@ public abstract class KernelTransform {
 
 	/**
 	 * Computes the displacement between the i^th source point
-	 * and the input point.  
+	 * and the input point.
 	 *
 	 * Stores the result in the input array 'res'.
 	 * Does not validate inputs.
 	 */
-	protected void srcPtDisplacement(int i, double[] pt, double[] res)
+	protected void srcPtDisplacement(final int i, final double[] pt, final double[] res)
 	{
 		for( int d=0; d<ndims; d++ ){
 			res[d] = sourceLandmarks[d][i] - pt[d];
@@ -595,8 +646,8 @@ public abstract class KernelTransform {
 
 
 	public abstract void computeG( double[] pt, DenseMatrix64F mtx);
-	
-	public void computeG(double[] pt, DenseMatrix64F mtx, double w ) {
+
+	public void computeG(final double[] pt, final DenseMatrix64F mtx, final double w ) {
 		computeG( pt, mtx );
 		CommonOps.scale( w, mtx );
 	}
