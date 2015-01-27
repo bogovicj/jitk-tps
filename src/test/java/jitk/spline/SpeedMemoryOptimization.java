@@ -9,7 +9,7 @@ public class SpeedMemoryOptimization {
 
 	double[][] srcPts;
 	double[][] tgtPts;
-	
+
 	float[][] srcPtsF;
 	float[][] tgtPtsF;
 	
@@ -85,10 +85,8 @@ public class SpeedMemoryOptimization {
 		
 		startTime = System.currentTimeMillis();
 		
-		ThinPlateR2LogRSplineKernelTransformFloatSep tpsSep = new ThinPlateR2LogRSplineKernelTransformFloatSep( ndims, srcPtsF, tgtPtsF );
-		tpsSep.computeAffine();
-		tpsSep.updateDisplacementPostAffine();
-		tpsSep.computePostAffineDef();
+		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, srcPts, tgtPts );
+		tps.solve();
 		
 		endTime = System.currentTimeMillis();
 		logger.info("sep (N="+N+") total time: " + (endTime-startTime) + "ms" );
@@ -145,8 +143,8 @@ public class SpeedMemoryOptimization {
 	
 		long startTime = System.currentTimeMillis();
 		
-		ThinPlateR2LogRSplineKernelTransformFloat tps = new ThinPlateR2LogRSplineKernelTransformFloat( ndims, srcPtsF, tgtPtsF );
-		tps.computeW();
+		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, srcPtsF, tgtPtsF );
+		tps.solve();
 		
 		long endTime = System.currentTimeMillis();
 		logger.info("(N="+N+") total time: " + (endTime-startTime) + "ms" );

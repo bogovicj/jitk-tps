@@ -85,7 +85,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, srcPts, tgtPts );
 		tps.setDoAffine(false);
-		tps.computeW();
+		tps.solve();
 		
 		double[] testPt = new double[ndims];
 		for( int n=0; n<N; n++) {
@@ -93,7 +93,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 				testPt[i] = srcPts[i][n];
 			}
 			
-			double[] outPt = tps.transformPoint(testPt);
+			double[] outPt = tps.apply(testPt);
 			for( int i=0; i<ndims; i++) {
 				assertEquals("pure affine transformation", tgtPts[i][n], outPt[i], tol);
 			}
@@ -104,33 +104,29 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 	public void testIdentitySmall2d(){
 		int ndims = 2;
 		
-		float[][] pts = new float[][]
+		double[][] pts = new double[][]
 				{
 				{-1,0,1}, // x
 				{-1,0,1}  // y
 				};
 		
-//		double[][] ptsd = new double[][]
-//				{
-//				{-1,0,1}, // x
-//				{-1,0,1}  // y
-//				};
-		
 		int nL = pts[0].length;
 		
-		float[][] tpts   = XfmUtils.genPtListScale(pts , new double[]{2,3});
+		double[][] tpts   = XfmUtils.genPtListScale(pts , new double[]{2,3});
 		
-		ThinPlateR2LogRSplineKernelTransformFloat tps = new ThinPlateR2LogRSplineKernelTransformFloat( ndims, pts, tpts );
-		tps.computeW();
+		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, pts, tpts );
+		tps.solve();
 		
 		
-		float[] testPt = new float[ndims];
+		double[] testPt = new double[ndims];
 		for( int n=0; n<nL; n++) {
 			for( int i=0; i<ndims; i++) {
 				testPt[i] = pts[i][n];
 			}
 			
-			float[] outPt = tps.transformPoint(testPt);
+			double[] outPt = tps.apply(testPt);
+			System.out.println( outPt.length );
+			System.out.println( tpts.length + " x " + tpts[0].length );
 			for( int i=0; i<ndims; i++) {
 				assertEquals("Identity transformation", tpts[i][n], outPt[i], tol);
 			}
@@ -141,35 +137,29 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 	public void testIdentitySmall3d(){
 		int ndims = 3;
 		
-		float[][] pts = new float[][]
+		
+		double[][] pts = new double[][]
 				{
 				{0,0,0,0,0,0,1,1}, // x
 				{0,0,0,1,1,1,2,2}, // y
-				{0,1,2,0,1,2,0,1}  // z					
+				{0,1,2,0,1,2,0,1}  // z	
 				};
-		
-//		double[][] ptsd = new double[][]
-//				{
-//				{-1,0,1},  // x
-//				{-1,0,1},  // y
-//				{-1,0,1}   // z
-//				};
 		
 		int nL = pts[0].length;
 		
-		float[][] tpts   = XfmUtils.genPtListScale(pts , new double[]{2,3,0.5});
+		double[][] tpts   = XfmUtils.genPtListScale(pts , new double[]{2,3,0.5});
 		
-		ThinPlateR2LogRSplineKernelTransformFloat tps = new ThinPlateR2LogRSplineKernelTransformFloat( ndims, pts, tpts );
-		tps.computeW();
+		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, pts, tpts );
+		tps.solve();
 		
 		
-		float[] testPt = new float[ndims];
+		double[] testPt = new double[ndims];
 		for( int n=0; n<nL; n++) {
 			for( int i=0; i<ndims; i++) {
 				testPt[i] = pts[i][n];
 			}
 			
-			float[] outPt = tps.transformPoint(testPt);
+			double[] outPt = tps.apply(testPt);
 			for( int i=0; i<ndims; i++) {
 				assertEquals("Identity transformation", tpts[i][n], outPt[i], tol);
 			}
@@ -189,7 +179,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		int nL = pts[0].length;
 		
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, pts, pts );
-		tps.computeW();
+		tps.solve();
 		
 		double[] testPt = new double[ndims];
 		for( int n=0; n<nL; n++) {
@@ -197,7 +187,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 				testPt[i] = pts[i][n];
 			}
 			
-			double[] outPt = tps.transformPoint(testPt);
+			double[] outPt = tps.apply(testPt);
 			for( int i=0; i<ndims; i++) {
 				assertEquals("Identity transformation", pts[i][n], outPt[i], tol);
 			}
@@ -205,14 +195,14 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 		ThinPlateR2LogRSplineKernelTransform tpsNA = new ThinPlateR2LogRSplineKernelTransform( ndims, pts, pts );
 		tpsNA.setDoAffine(false);
-		tpsNA.computeW();
+		tpsNA.solve();
 		
 		for( int n=0; n<nL; n++) {
 			for( int i=0; i<ndims; i++) {
 				testPt[i] = pts[i][n];
 			}
 			
-			double[] outPt = tpsNA.transformPoint(testPt);
+			double[] outPt = tpsNA.apply(testPt);
 			for( int i=0; i<ndims; i++) {
 				assertEquals("Identity transformation", pts[i][n], outPt[i], tol);
 			}
@@ -234,23 +224,23 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		double[][] tgtPtList = XfmUtils.genPtListScale(src_simple, new double[]{2, 0.5, 4});
 
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, src_simple, tgtPtList );
-		tps.computeW();
+		tps.solve();
 
 
 		double[] srcPt = new double[]{ 0.0f, 0.0f, 0.0f};
-		double[] ptXfm = tps.transformPoint(srcPt);
+		double[] ptXfm = tps.apply(srcPt);
 		assertEquals("scale x1", 0, ptXfm[0], tol);
 		assertEquals("scale y1", 0, ptXfm[1], tol);
 		assertEquals("scale z1", 0, ptXfm[2], tol);
 
 		srcPt = new double[]{ 0.5f, 0.5f, 0.5f };
-		ptXfm = tps.transformPoint(srcPt);
+		ptXfm = tps.apply(srcPt);
 		assertEquals("scale x2", 1.00, ptXfm[0], tol);
 		assertEquals("scale y2", 0.25, ptXfm[1], tol);
 		assertEquals("scale z2", 2.00, ptXfm[2], tol);
 
 		srcPt = new double[]{ 1.0f, 1.0f, 1.0f };
-		ptXfm = tps.transformPoint(srcPt);
+		ptXfm = tps.apply(srcPt);
 		assertEquals("scale x3", 2.0, ptXfm[0], tol);
 		assertEquals("scale y3", 0.5, ptXfm[1], tol);
 		assertEquals("scale z3", 4.0, ptXfm[2], tol);
@@ -263,7 +253,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, srcPts, tgtPts );
 		//tps.setDoAffine(false);
-		tps.computeW();
+		tps.solve();
 		
 		double[][] a = tps.getAffine();
 		double[] t   = tps.getTranslation();
@@ -277,7 +267,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 				testPt[i] = srcPts[i][n];
 			}
 			
-			double[] outPt = tps.transformPoint(testPt);
+			double[] outPt = tps.apply(testPt);
 			for( int i=0; i<ndims; i++) {
 				assertEquals("Identity transformation", tgtPts[i][n], outPt[i], tol);
 			}
@@ -302,7 +292,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, src, tgt );
 		tps.setDoAffine(false);
-		tps.computeW();
+		tps.solve();
 		
 		//System.out.println(" aMatrix: (Expect all zeros)\n" + 
 		//		printArray(tps.aMatrix) + "\n");
@@ -323,89 +313,58 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 	}
 	
-
-	
-	@Test
-	public void testScale2() {
-		ndims = 2;
-		N     = 6;
-		srcPtsF = new float[ndims][N];
-		for(int d=0; d<ndims; d++)for( int i=0; i<N; i++){
-			srcPtsF[d][i] = (float)( 10 * rand.nextDouble());
-		}
-		tgtPtsF = XfmUtils.genPtListScale(srcPtsF, new double[]{2, 0.5});
-		
-		ThinPlateR2LogRSplineKernelTransformFloat tps = new ThinPlateR2LogRSplineKernelTransformFloat( ndims, srcPtsF, tgtPtsF );
-		tps.computeW();
-		
-		float[] testPt = new float[ndims];
-		for( int n=0; n<N; n++) {
-			
-			for( int i=0; i<ndims; i++) {
-				testPt[i] = srcPtsF[i][n];
-			}
-			
-			float[] outPt = tps.transformPoint(testPt);
-			for( int i=0; i<ndims; i++) {
-				assertEquals("Identity transformation", tgtPtsF[i][n], outPt[i], tol);
-			}
-		}
-		
-	}
-	
-	@Test
-	public void testTransXfmAffineTps(){
-		
+//	@Test
+//	public void testTransXfmAffineTps(){
+//		
+////		int ndims = 2;
+////		float[][] src_simple = new float[][]
+////				{
+////				{-1,-1,-1,1,1,1,2,2,2}, // x
+////				{-1,1,2,-1,1,2,0,1,2}, // y
+////				};
+////		
+////		// target points
+////		float[][] tgt= new float[][]
+////				{
+////				{ -0.5f, -0.5f, -0.5f, 1.5f, 1.5f, 1.5f, 2.0f, 2.0f, 2.0f}, // x
+////				{ -0.5f, 1.5f, 2.0f, -0.5f, 1.5f, 2.0f, -0.5f, 1.5f, 2.0f } // y
+////				};
+//		
 //		int ndims = 2;
-//		float[][] src_simple = new float[][]
+//		srcPtsF = new float[][]
 //				{
 //				{-1,-1,-1,1,1,1,2,2,2}, // x
-//				{-1,1,2,-1,1,2,0,1,2}, // y
+//				{-1,1,2,-1,1,2,-1,1,2}, // y
 //				};
 //		
 //		// target points
-//		float[][] tgt= new float[][]
+//		tgtPtsF= new float[][]
 //				{
-//				{ -0.5f, -0.5f, -0.5f, 1.5f, 1.5f, 1.5f, 2.0f, 2.0f, 2.0f}, // x
-//				{ -0.5f, 1.5f, 2.0f, -0.5f, 1.5f, 2.0f, -0.5f, 1.5f, 2.0f } // y
+//					{ 0,0,0, 2,2,2, 3,3,3}, // x
+//					{ 1,3,4, 1,3,4, 1,3,5 } // y
 //				};
-		
-		int ndims = 2;
-		srcPtsF = new float[][]
-				{
-				{-1,-1,-1,1,1,1,2,2,2}, // x
-				{-1,1,2,-1,1,2,-1,1,2}, // y
-				};
-		
-		// target points
-		tgtPtsF= new float[][]
-				{
-					{ 0,0,0, 2,2,2, 3,3,3}, // x
-					{ 1,3,4, 1,3,4, 1,3,5 } // y
-				};
-
-		ThinPlateR2LogRSplineKernelTransformFloatSep tps 
-			= new ThinPlateR2LogRSplineKernelTransformFloatSep( ndims, srcPtsF, tgtPtsF);
-
-		tps.fit();
-		
-		N = srcPtsF[0].length;
-		float[] testPt = new float[ndims];
-		for( int n=0; n<N; n++) {
-
-			for( int d=0; d<ndims; d++) {
-				testPt[d] = srcPtsF[d][n];
-			}
-
-			float[] outPt = tps.transformPoint(testPt);
-			logger.debug("point: " + XfmUtils.printArray(testPt) + " -> " + XfmUtils.printArray(outPt));
-			for( int d=0; d<ndims; d++) {
-				assertEquals("translation, use affine", tgtPtsF[d][n], outPt[d], tol);
-			}
-		}
-	
-		
-	}
+//
+//		ThinPlateR2LogRSplineKernelTransformFloatSep tps 
+//			= new ThinPlateR2LogRSplineKernelTransformFloatSep( ndims, srcPtsF, tgtPtsF);
+//
+//		tps.fit();
+//		
+//		N = srcPtsF[0].length;
+//		float[] testPt = new float[ndims];
+//		for( int n=0; n<N; n++) {
+//
+//			for( int d=0; d<ndims; d++) {
+//				testPt[d] = srcPtsF[d][n];
+//			}
+//
+//			float[] outPt = tps.transform(testPt);
+//			logger.debug("point: " + XfmUtils.printArray(testPt) + " -> " + XfmUtils.printArray(outPt));
+//			for( int d=0; d<ndims; d++) {
+//				assertEquals("translation, use affine", tgtPtsF[d][n], outPt[d], tol);
+//			}
+//		}
+//	
+//	}
 	
 	@Test
 	public void testScale() {
@@ -423,21 +382,21 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		logger.debug("\ntgtPts:\n" + XfmUtils.printArray(tgtPts));
 
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, srcPts, tgtPts );
-		tps.computeW();
+		tps.solve();
 
 
 		double[] srcPt = new double[]{ 0.0f, 0.0f };
-		double[] ptXfm = tps.transformPoint(srcPt);
+		double[] ptXfm = tps.apply(srcPt);
 		assertEquals("scale x1", 0, ptXfm[0], tol);
 		assertEquals("scale y1", 0, ptXfm[1], tol);
 
 		srcPt = new double[]{ 0.5f, 0.5f };	
-		ptXfm = tps.transformPoint(srcPt);
+		ptXfm = tps.apply(srcPt);
 		assertEquals("scale x2", 1.00, ptXfm[0], tol);
 		assertEquals("scale y2", 0.25, ptXfm[1], tol);
 
 		srcPt = new double[]{ 1.0f, 1.0f };
-		ptXfm = tps.transformPoint(srcPt);
+		ptXfm = tps.apply(srcPt);
 		assertEquals("scale x3", 2.0, ptXfm[0], tol);
 		assertEquals("scale y3", 0.5, ptXfm[1], tol);
 		
@@ -450,7 +409,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 				testPt[d] = srcPts[d][n];
 			}
 			
-			double[] outPt = tps.transformPoint(testPt);
+			double[] outPt = tps.apply(testPt);
 			for( int d=0; d<ndims; d++) {
 				assertEquals("Identity transformation", tgtPts[d][n], outPt[d], tol);
 			}
@@ -474,28 +433,75 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 				};
 
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, src_simple, tgt);
-		tps.computeW();
+		tps.solve();
 		//tps.printLandmarks();
 
+		/* **** PT 2 **** */
 		double[] srcPt = new double[]{0.0f,0.0f};
-		double[] ptXfm = tps.transformPoint(srcPt);
+		double[] ptXfm = tps.apply(srcPt);
 		assertEquals("warp x1", -0.5, ptXfm[0], tol);
 		assertEquals("warp y1", -0.5, ptXfm[1], tol);
+		
+		// check float
+		float[] srcPtF = new float[ndims];
+		XfmUtils.copy(srcPt, srcPtF);
+		float[] ptXfmF = tps.apply(srcPtF);
+		assertEquals("warp x1 float", -0.5f, ptXfmF[0], tol);
+		assertEquals("warp y1 float", -0.5f, ptXfmF[1], tol);
+		
+		// double in place		
+		tps.applyInPlace(srcPt);
+		assertEquals("warp x1 in place", -0.5, srcPt[0], tol);
+		assertEquals("warp y1 in place", -0.5, srcPt[1], tol);
+		
+		// float in place
+		tps.applyInPlace(srcPtF);
+		assertEquals("warp x1 float in place", -0.5f, srcPtF[0], tol);
+		assertEquals("warp y1 float in place", -0.5f, srcPtF[1], tol);
 
+		/* **** PT 2 **** */
 		srcPt = new double[]{0.5f,0.5f};
-		ptXfm = tps.transformPoint(srcPt);
+		ptXfm = tps.apply(srcPt);
 		
 		// the values below are what matlab returns for
 		// tpaps( p, q, 1 );
 		// where p and q are the source and target points, respectively
 		assertEquals("warp x2", 0.6241617, ptXfm[0], tol);
 		assertEquals("warp y2", 0.6241617, ptXfm[1], tol);
+		
+		// check float 2
+		XfmUtils.copy(srcPt, srcPtF);
+		ptXfmF = tps.apply(srcPtF);
+		assertEquals("warp x2 float ", 0.6241617, ptXfmF[0], tol);
+		assertEquals("warp y2 float", 0.6241617, ptXfmF[1], tol);
+		
+		// double in place 2
+		tps.applyInPlace(srcPt);
+		assertEquals("warp x2 in place", 0.6241617, srcPt[0], tol);
+		assertEquals("warp y2 in place", 0.6241617, srcPt[1], tol);
+		
+		tps.applyInPlace(srcPtF);
+		assertEquals("warp x2 in place", 0.6241617, srcPtF[0], tol);
+		assertEquals("warp y2 in place", 0.6241617, srcPtF[1], tol);
 
+		/* **** PT 3 **** */
 		srcPt = new double[]{1.0f,1.0f};
-		ptXfm = tps.transformPoint(srcPt);
+		ptXfm = tps.apply(srcPt);
 		assertEquals("warp x3", 1.5, ptXfm[0], tol);
 		assertEquals("warp y3", 1.5, ptXfm[1], tol);
+		
+		XfmUtils.copy(srcPt, srcPtF);
+		ptXfmF = tps.apply(srcPtF);
+		assertEquals("warp x3 float", 1.5, ptXfmF[0], tol);
+		assertEquals("warp y3 float", 1.5, ptXfmF[1], tol);
+		
+		tps.applyInPlace(srcPt);
+		assertEquals("warp x3 in place", 1.5, srcPt[0], tol);
+		assertEquals("warp y3 in place", 1.5, srcPt[1], tol);
 
+		tps.applyInPlace(srcPtF);
+		assertEquals("warp x3 float in place", 1.5, srcPtF[0], tol);
+		assertEquals("warp y3 float in place", 1.5, srcPtF[1], tol);
 	}
 	
 	@Test
@@ -536,16 +542,16 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 		ThinPlateR2LogRSplineKernelTransform tps 
 			= new ThinPlateR2LogRSplineKernelTransform( ndims, src_simple, tgt, weights);
-		tps.computeW();
+		tps.solve();
 		//tps.printLandmarks();
 
 		double[] srcPt = new double[]{0.0f,0.0f};
-		double[] ptXfm = tps.transformPoint(srcPt);
+		double[] ptXfm = tps.apply(srcPt);
 		assertEquals("warp x1", -0.5, ptXfm[0], tol);
 		assertEquals("warp y1", -0.5, ptXfm[1], tol);
 
 		srcPt = new double[]{0.5f,0.5f};
-		ptXfm = tps.transformPoint(srcPt);
+		ptXfm = tps.apply(srcPt);
 		
 		// the values below are what matlab returns for
 		// tpaps( p, q, 1 );
@@ -554,7 +560,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		assertEquals("warp y2", 0.6241617, ptXfm[1], tol);
 
 		srcPt = new double[]{1.0f,1.0f};
-		ptXfm = tps.transformPoint(srcPt);
+		ptXfm = tps.apply(srcPt);
 		assertEquals("warp x3", 1.5, ptXfm[0], tol);
 		assertEquals("warp y3", 1.5, ptXfm[1], tol);
 
