@@ -52,7 +52,7 @@ public class XfmUtils {
 		return pts;
 	}
 	
-	public double[] subtract(double[] p1, double[] p2){
+	public static double[] subtract(double[] p1, double[] p2){
 		int nd = p1.length; 
 		double[] out = new double[nd];
 		for (int d=0; d<nd; d++){
@@ -60,8 +60,16 @@ public class XfmUtils {
 		}
 		return out;
 	}
+	public static float[] subtract(float[] p1, float[] p2){
+		int nd = p1.length; 
+		float[] out = new float[nd];
+		for (int d=0; d<nd; d++){
+			out[d] = p1[d] - p2[d];
+		}
+		return out;
+	}
 	
-	public double[] subtract(double[] p1, double[] p2, double[] out){
+	public static double[] subtract(double[] p1, double[] p2, double[] out){
 		int nd = out.length; 
 		for (int d=0; d<nd; d++){
 			out[d] = p1[d] - p2[d];

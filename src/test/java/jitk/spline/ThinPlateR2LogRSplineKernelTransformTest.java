@@ -85,7 +85,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, srcPts, tgtPts );
 		tps.setDoAffine(false);
-		tps.computeW();
+		tps.solve();
 		
 		double[] testPt = new double[ndims];
 		for( int n=0; n<N; n++) {
@@ -115,7 +115,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		double[][] tpts   = XfmUtils.genPtListScale(pts , new double[]{2,3});
 		
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, pts, tpts );
-		tps.computeW();
+		tps.solve();
 		
 		
 		double[] testPt = new double[ndims];
@@ -148,7 +148,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		double[][] tpts   = XfmUtils.genPtListScale(pts , new double[]{2,3,0.5});
 		
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, pts, tpts );
-		tps.computeW();
+		tps.solve();
 		
 		
 		double[] testPt = new double[ndims];
@@ -177,7 +177,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		int nL = pts[0].length;
 		
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, pts, pts );
-		tps.computeW();
+		tps.solve();
 		
 		double[] testPt = new double[ndims];
 		for( int n=0; n<nL; n++) {
@@ -193,7 +193,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 		ThinPlateR2LogRSplineKernelTransform tpsNA = new ThinPlateR2LogRSplineKernelTransform( ndims, pts, pts );
 		tpsNA.setDoAffine(false);
-		tpsNA.computeW();
+		tpsNA.solve();
 		
 		for( int n=0; n<nL; n++) {
 			for( int i=0; i<ndims; i++) {
@@ -222,7 +222,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		double[][] tgtPtList = XfmUtils.genPtListScale(src_simple, new double[]{2, 0.5, 4});
 
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, src_simple, tgtPtList );
-		tps.computeW();
+		tps.solve();
 
 
 		double[] srcPt = new double[]{ 0.0f, 0.0f, 0.0f};
@@ -251,7 +251,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, srcPts, tgtPts );
 		//tps.setDoAffine(false);
-		tps.computeW();
+		tps.solve();
 		
 		double[][] a = tps.getAffine();
 		double[] t   = tps.getTranslation();
@@ -290,7 +290,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, src, tgt );
 		tps.setDoAffine(false);
-		tps.computeW();
+		tps.solve();
 		
 		//System.out.println(" aMatrix: (Expect all zeros)\n" + 
 		//		printArray(tps.aMatrix) + "\n");
@@ -380,7 +380,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		logger.debug("\ntgtPts:\n" + XfmUtils.printArray(tgtPts));
 
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, srcPts, tgtPts );
-		tps.computeW();
+		tps.solve();
 
 
 		double[] srcPt = new double[]{ 0.0f, 0.0f };
@@ -431,7 +431,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 				};
 
 		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, src_simple, tgt);
-		tps.computeW();
+		tps.solve();
 		//tps.printLandmarks();
 
 		double[] srcPt = new double[]{0.0f,0.0f};
@@ -493,7 +493,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 		
 		ThinPlateR2LogRSplineKernelTransform tps 
 			= new ThinPlateR2LogRSplineKernelTransform( ndims, src_simple, tgt, weights);
-		tps.computeW();
+		tps.solve();
 		//tps.printLandmarks();
 
 		double[] srcPt = new double[]{0.0f,0.0f};

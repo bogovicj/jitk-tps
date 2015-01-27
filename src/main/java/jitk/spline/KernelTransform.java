@@ -58,7 +58,13 @@ public abstract class KernelTransform {
 	protected int initialContainerSize = 100;
 	protected double increaseRaio = 0.25;
 	protected int containerSize;
-
+	
+	
+	public static enum SolverType{ ADAPTIVE, PSEUDOINVERSE, LINEAR, LEAST_SQUARES, 
+								   LEAST_SQUARES_QR, GENERAL };
+	
+	public SolverType solverType = SolverType.ADAPTIVE;
+	
 	protected static Logger logger = LogManager.getLogger(KernelTransform.class
 			.getName());
 
@@ -358,13 +364,21 @@ public abstract class KernelTransform {
 		return nrm;
 	}
 
+	
+	/**
+	 * 
+	 */
+	public void solve(){
+		computeW();
+	}
+	
 	/**
 	 * The main workhorse method.
 	 * <p>
 	 * Implements Equation (5) in Davis et al. and calls reorganizeW.
 	 * 
 	 */
-	public void computeW() {
+	protected void computeW() {
 
 		initMatrices();
 
@@ -377,12 +391,42 @@ public abstract class KernelTransform {
 		/*
 		 * use pseudoinverse for underdetermined system linear solver otherwise
 		 */
-		if (nLandmarks < ndims * ndims) {
-			logger.debug("pseudo - inverse solver");
-			solver = LinearSolverFactory.pseudoInverse(true);
-		} else {
-			logger.debug("linear solver");
-			solver = LinearSolverFactory.linear(lMatrix.numCols);
+		if( solverType.equals( SolverType.ADAPTIVE )) {
+			if (nLandmarks < ndims * ndims) {
+				logger.debug("pseudo - inverse solver");
+				solver = LinearSolverFactory.pseudoInverse(true);
+			} else {
+				logger.debug("linear solver");
+				solver = LinearSolverFactory.linear(lMatrix.numCols);
+			}
+		}else{
+			switch (solverType) {
+			case LINEAR:
+				logger.debug("Using LINEAR solver");
+				solver = LinearSolverFactory.linear(lMatrix.numCols);
+				break;
+			case PSEUDOINVERSE:
+				logger.debug("Using PSEUDOINVERSE solver");
+				solver = LinearSolverFactory.pseudoInverse(true);
+				break;	
+			case LEAST_SQUARES:
+				logger.debug("Using LEAST_SQUARES solver");
+				solver = LinearSolverFactory.leastSquares(lMatrix.numRows, lMatrix.numCols);
+				break;
+			case LEAST_SQUARES_QR:
+				logger.debug("Using LEAST_SQUARES_QR solver");
+				solver = LinearSolverFactory.leastSquaresQrPivot(true, false);
+				break;
+			case GENERAL:
+				logger.debug("Using GENERAL solver");
+				solver = LinearSolverFactory.general(lMatrix.numRows, lMatrix.numCols);
+				break;	
+			default:
+				logger.error("Invalid solver specified");
+				solver = null;
+				break;
+
+			}
 		}
 
 		// solve linear system
