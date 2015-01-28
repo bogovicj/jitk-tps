@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>jitk</groupId>
 	<artifactId>jitk-tps</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>JavaITK thin plate spline</name>
 	<description>A java port of the ITK thin plate spline implementation.</description>
 	<dependencies>
@@ -27,7 +27,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>mpicbg-trakem2</artifactId>
-			<version>1.0.4-SNAPSHOT</version>
+			<version>1.0.3</version>
 		</dependency>
 	</dependencies>
 	<scm>
