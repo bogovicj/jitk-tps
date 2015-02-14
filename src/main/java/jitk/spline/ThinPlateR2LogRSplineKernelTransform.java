@@ -17,10 +17,10 @@ import org.ejml.ops.CommonOps;
  * M. H. Davis, a Khotanzad, D. P. Flamig, and S. E. Harms, “A physics-based
  * coordinate transformation for 3-D image matching.,” IEEE Trans. Med. Imaging,
  * vol. 16, no. 3, pp. 317–28, Jun. 1997.
- * 
+ *
  * @author Kitware (ITK)
  * @author John Bogovic
- * 
+ *
  */
 public class ThinPlateR2LogRSplineKernelTransform implements
 		CoordinateTransform {
@@ -178,9 +178,9 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	/*
 	 * Sets the source and target landmarks for this KernelTransform object
-	 * 
+	 *
 	 * @param sourcePts the collection of source points
-	 * 
+	 *
 	 * @param targetPts the collection of target/destination points
 	 */
 	public void setLandmarks(final double[][] srcPts, final double[][] tgtPts)
@@ -200,9 +200,9 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	/*
 	 * Sets the source and target landmarks for this KernelTransform object
-	 * 
+	 *
 	 * @param sourcePts the collection of source points
-	 * 
+	 *
 	 * @param targetPts the collection of target/destination points
 	 */
 	public void setLandmarks(final float[][] srcPts, final float[][] tgtPts)
@@ -369,7 +369,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void solve() {
 		computeW();
@@ -379,7 +379,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 * The main workhorse method.
 	 * <p>
 	 * Implements Equation (5) in Davis et al. and calls reorganizeW.
-	 * 
+	 *
 	 */
 	protected void computeW() {
 
@@ -571,7 +571,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 * Transforms the input point according to the affine part of the thin plate
 	 * spline stored by this object.
-	 * 
+	 *
 	 * @param pt
 	 *            the point to be transformed
 	 * @return the transformed point
@@ -597,7 +597,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 * Transform a source vector pt into a target vector result. pt and result
 	 * must NOT be the same vector.
-	 * 
+	 *
 	 * @param pt
 	 * @param result
 	 */
@@ -629,11 +629,12 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 * Transforms the input point according to the thin plate spline stored by
 	 * this object.
-	 * 
+	 *
 	 * @param pt
 	 *            the point to be transformed
 	 * @return the transformed point
 	 */
+	@Override
 	public double[] apply(final double[] pt) {
 		final double[] result = new double[ndims];
 
@@ -644,9 +645,10 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	/**
 	 * Transform pt in place.
-	 * 
+	 *
 	 * @param pt
 	 */
+	@Override
 	public void applyInPlace(final double[] pt) {
 
 		apply(pt, tmp);
@@ -656,32 +658,9 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		}
 	}
 
-	@Override
-	public float[] apply(float[] pt) {
-		// copy input to tmp
-		final float[] ptOut = new float[ndims];
-		XfmUtils.copy(pt, tmpPt);
-		applyInPlace(tmpPt);
-
-		// copy to output
-		XfmUtils.copy(tmpPt, ptOut);
-		return ptOut;
-	}
-
-	@Override
-	public void applyInPlace(float[] pt) {
-		// copy input to tmp
-		XfmUtils.copy(pt, tmpPt);
-
-		applyInPlace(tmpPt);
-
-		// copy to output
-		XfmUtils.copy(tmpPt, pt);
-	}
-
 	/**
 	 * Computes the displacement between the i^th and j^th source points.
-	 * 
+	 *
 	 * Stores the result in the input array 'res' Does not validate inputs.
 	 */
 	protected void srcPtDisplacement(final int i, final int j,
@@ -694,7 +673,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 * Computes the displacement between the i^th source point and the input
 	 * point.
-	 * 
+	 *
 	 * Stores the result in the input array 'res'. Does not validate inputs.
 	 */
 	protected void srcPtDisplacement(final int i, final double[] pt,
