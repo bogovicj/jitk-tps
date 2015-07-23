@@ -25,6 +25,8 @@ import org.ejml.ops.CommonOps;
 public class ThinPlateR2LogRSplineKernelTransform implements
 		CoordinateTransform {
 
+	private static final long serialVersionUID = -972934724062617822L;
+	
 	protected int ndims;
 
 	/* temporary vectors for intermediate calculations */
@@ -150,6 +152,19 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		dMatrix = new DenseMatrix64F(ndims, nLandmarks);
 		dMatrix.setData(dMatrixData);
 
+	}
+	
+	public ThinPlateR2LogRSplineKernelTransform deepCopy()
+	{
+		ThinPlateR2LogRSplineKernelTransform tps = new 
+				ThinPlateR2LogRSplineKernelTransform( ndims, 
+						sourceLandmarks, targetLandmarks  );
+		
+		tps.aMatrix = this.aMatrix;
+		tps.bVector = this.bVector;
+		tps.dMatrix = this.dMatrix;
+		
+		return tps;
 	}
 
 	public int getNumLandmarks() {
