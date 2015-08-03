@@ -56,6 +56,14 @@ public class XfmUtils {
 
 		return pts;
 	}
+	
+	public static double[][] deepCopy( double[][] in ) {
+		double[][] out = new double[ in.length ][ in[0].length ];
+		for (int i = 0; i < in.length; i++)for (int j = 0; j < in[0].length; j++) {
+			out[i][j] = in[i][j]; 
+		}
+		return out;
+	}
 
 	public static double[] toDouble(float[] in) {
 		double[] out = new double[in.length];
