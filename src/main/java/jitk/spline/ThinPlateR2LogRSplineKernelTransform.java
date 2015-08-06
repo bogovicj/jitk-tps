@@ -58,6 +58,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	protected boolean computeAffine = true;
 
 	protected int nLandmarks;
+	protected int nLandmarksActive;
 	protected double[][] sourceLandmarks;
 	protected double[][] targetLandmarks;
 	protected double[] weights; // TODO: make the weights do something :-P
@@ -99,9 +100,12 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		CommonOps.setIdentity(I);
 
 		nLandmarks = 0;
+		nLandmarksActive = 0;
 		sourceLandmarks = new double[ndims][initialContainerSize];
 		targetLandmarks = new double[ndims][initialContainerSize];
 		displacement = new double[initialContainerSize][ndims];
+		isPairActive = new boolean[initialContainerSize];
+		Arrays.fill( isPairActive, true );
 		
 		containerSize = initialContainerSize;
 	}
@@ -145,6 +149,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 		this.ndims = srcPts.length;
 		this.nLandmarks = srcPts[0].length;
+		nLandmarksActive = this.nLandmarks;
 
 		tmp = new double[ndims];
 		tmpPt = new double[ndims];
@@ -169,6 +174,10 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		tps.aMatrix = XfmUtils.deepCopy( aMatrix );
 		tps.bVector = Arrays.copyOf( this.bVector, this.bVector.length );
 		tps.dMatrix = this.dMatrix.copy();
+		tps.isPairActive = this.isPairActive.clone();
+		
+		tps.nLandmarks = this.nLandmarks;
+		tps.nLandmarksActive = this.nLandmarksActive;
 		
 		return tps;
 	}
@@ -180,27 +189,38 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 				bVector.clone(), dMatrix.data.clone() );
 	}
 
-	public int getNumLandmarks() {
+	public int getNumLandmarks()
+	{
 		return this.nLandmarks;
 	}
+	
+	public int getNumActiveLandmarks() 
+	{
+		return nLandmarksActive;
+	}
 
-	public int getNumDims() {
+	public int getNumDims()
+	{
 		return ndims;
 	}
 
-	public double[][] getSourceLandmarks() {
+	public double[][] getSourceLandmarks()
+	{
 		return sourceLandmarks;
 	}
 
-	public double[][] getAffine() {
+	public double[][] getAffine()
+	{
 		return aMatrix;
 	}
 
-	public double[] getTranslation() {
+	public double[] getTranslation()
+	{
 		return bVector;
 	}
 
-	public double[] getKnotWeights() {
+	public double[] getKnotWeights()
+	{
 		return dMatrix.getData();
 	}
 
@@ -215,6 +235,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			throws IllegalArgumentException {
 
 		nLandmarks = srcPts[0].length;
+		nLandmarksActive = nLandmarks;
 		containerSize = nLandmarks;
 		
 		assert srcPts.length == ndims && tgtPts.length == ndims : "Source and target landmark lists must have "
@@ -243,7 +264,8 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 				+ "the same number of points.";
 
 		nLandmarks = srcPts[0].length;
-
+		nLandmarksActive = nLandmarks;
+		
 		sourceLandmarks = new double[ndims][nLandmarks];
 		targetLandmarks = new double[ndims][nLandmarks];
 		displacement = new double[nLandmarks][ndims];
@@ -258,12 +280,42 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		}
 	}
 	
+	public boolean validateTransformPoints()
+	{
+		double[] validtmp = new double[ ndims ];
+		double[] pt = new double[ ndims ];
+		
+		for( int i = 0; i < nLandmarksActive; i++ )
+		{
+			if( !isPairActive[ i ] )
+				continue;
+			
+			for( int d = 0; d < ndims; d++ )
+				pt[ d ] = sourceLandmarks[ d ][ i ];
+			
+			apply( pt, validtmp );
+			for( int d = 0; d < ndims; d++ )
+			{
+				double diff = targetLandmarks[ d ][ i ] - validtmp[ d ]; 
+				if ( diff > 0.1 || diff < -0.1 )
+				{
+					System.out.println( "error for landmark: " + i );
+					System.out.println( "   pt : " + pt[0] + " " + pt[1] );
+					System.out.println( "   res: " + validtmp[0] + " " + validtmp[1] );
+					return false;
+				}
+			}
+		}
+		
+		return true;
+	}
+	
 	public void disableLandmarkPair( final int i )
 	{
 		if( isPairActive[ i ] )
 		{
 			isPairActive[ i ] = false;
-			nLandmarks--;
+			nLandmarksActive--;
 		}
 	}
 	
@@ -272,14 +324,39 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		if( !isPairActive[ i ] )
 		{
 			isPairActive[ i ] = true;
-			nLandmarks++;
+			nLandmarksActive++;
 		}
+	}
+	
+	public void removePoint( final int i )
+	{
+		int addme = 0;
+		for( int j = 0; j < nLandmarks; j++ )
+		{
+			if( j == i )
+				addme++;
+			
+			if( j + addme < containerSize )
+			{
+				for (int d = 0; d < ndims; d++) 
+				{
+					sourceLandmarks[ d ][ j ] = sourceLandmarks[ d ][ j + addme ];
+					targetLandmarks[ d ][ j ] = targetLandmarks[ d ][ j + addme ];
+					displacement[ j ][ d ] = targetLandmarks[ d ][ j ] - sourceLandmarks[ d ][ j ];
+					isPairActive[ j ]= isPairActive[ j + addme ];
+				}
+			}
+		}
+		nLandmarks--;
+		
+		if( isPairActive[i])
+			nLandmarksActive--;
 	}
 
 	public void updateSourceLandmark(final int i, final double[] newSource) {
 		for (int d = 0; d < ndims; d++) {
 			sourceLandmarks[d][i] = newSource[d];
-			displacement[i][d] = targetLandmarks[d][i] -sourceLandmarks[d][i];  
+			displacement[i][d] = targetLandmarks[d][i] - sourceLandmarks[d][i];  
 		}
 	}
 
@@ -311,8 +388,10 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		for (int d = 0; d < ndims; d++) {
 			sourceLandmarks[d][nLandmarks] = source[d];
 			targetLandmarks[d][nLandmarks] = target[d];
-			displacement[nLandmarks][d] = targetLandmarks[d][nLandmarks] - sourceLandmarks[d][nLandmarks];  
+			displacement[nLandmarks][d] = targetLandmarks[d][nLandmarks] - sourceLandmarks[d][nLandmarks]; 
 		}
+		nLandmarks++;
+		nLandmarksActive++;
 	}
 
 	public void addMatch(final double[] source, final double[] target) {
@@ -322,9 +401,10 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		for (int d = 0; d < ndims; d++) {
 			sourceLandmarks[d][nLandmarks] = source[d];
 			targetLandmarks[d][nLandmarks] = target[d];
-			displacement[nLandmarks][d] = targetLandmarks[d][nLandmarks] - sourceLandmarks[d][nLandmarks];  
+			displacement[nLandmarks][d] = targetLandmarks[d][nLandmarks] - sourceLandmarks[d][nLandmarks];
 		}
 		nLandmarks++;
+		nLandmarksActive++;
 	}
 
 	protected void expandLandmarkContainers() {
@@ -337,18 +417,22 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		final double[][] NEWsourceLandmarks = new double[ndims][newSize];
 		final double[][] NEWtargetLandmarks = new double[ndims][newSize];
 		final double[][] NEWdisplacement = new double[newSize][ndims];
-
+		final boolean[]  NEWisPairActive = new boolean[newSize]; 
+		Arrays.fill( NEWisPairActive, true );
+		
 		for (int d = 0; d < ndims; d++)
 			for (int i = 0; i < nLandmarks; i++) {
 				NEWsourceLandmarks[d][i] = sourceLandmarks[d][i];
 				NEWtargetLandmarks[d][i] = targetLandmarks[d][i];
-				NEWdisplacement[i][d] = NEWtargetLandmarks[d][i] - NEWsourceLandmarks[d][i];  
+				NEWdisplacement[i][d] = NEWtargetLandmarks[d][i] - NEWsourceLandmarks[d][i];
+				NEWisPairActive[i] = isPairActive[i];
 			}
 
 		containerSize = newSize;
 		sourceLandmarks = NEWsourceLandmarks;
 		targetLandmarks = NEWtargetLandmarks;
 		displacement = NEWdisplacement;
+		isPairActive = NEWisPairActive;
 	}
 
 	/**
@@ -375,27 +459,31 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	private void initMatrices() {
 
-		dMatrix = new DenseMatrix64F( ndims, nLandmarks );
-		kMatrix = new DenseMatrix64F( ndims * nLandmarks, ndims * nLandmarks );
+		System.out.println( "nLandmarks: " + nLandmarks );
+		System.out.println( "nLandmarksActive: " + nLandmarksActive );
+		dMatrix = new DenseMatrix64F( ndims, nLandmarksActive );
+		kMatrix = new DenseMatrix64F( ndims * nLandmarksActive, ndims * nLandmarksActive );
 
-		if (computeAffine) {
+		if (computeAffine)
+		{
 			aMatrix = new double[ ndims ][ ndims ];
 			bVector = new double[ ndims ];
 
-			pMatrix = new DenseMatrix64F( (ndims * nLandmarks),
+			pMatrix = new DenseMatrix64F( (ndims * nLandmarksActive),
 					(ndims * (ndims + 1)));
-			lMatrix = new DenseMatrix64F( ndims * (nLandmarks + ndims + 1),	
-					ndims * (nLandmarks + ndims + 1));
-			wMatrix = new DenseMatrix64F( (ndims * nLandmarks) + ndims
-					* (ndims + 1), 1);
-			yMatrix = new DenseMatrix64F( ndims * (nLandmarks + ndims + 1), 1);
-		} else {
+			lMatrix = new DenseMatrix64F( ndims * (nLandmarksActive + ndims + 1),	
+					ndims * (nLandmarksActive + ndims + 1));
+			wMatrix = new DenseMatrix64F( (ndims * nLandmarksActive) + ndims * (ndims + 1), 1);
+			yMatrix = new DenseMatrix64F( ndims * (nLandmarksActive + ndims + 1), 1);
+		}
+		else 
+		{
 			// we dont need the P matrix and L can point
 			// directly to K rather than itself being initialized
 
 			// the W matrix won't hold the affine component
-			wMatrix = new DenseMatrix64F( ndims * nLandmarks, 1 );
-			yMatrix = new DenseMatrix64F( ndims * nLandmarks, 1 );
+			wMatrix = new DenseMatrix64F( ndims * nLandmarksActive, 1 );
+			yMatrix = new DenseMatrix64F( ndims * nLandmarksActive, 1 );
 		}
 
 	}
@@ -418,8 +506,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		for (int d = 0; d < ndims; d++)
 			for (int i = 0; i < nLandmarks; i++) 
 			{
-//				if( isPairActive[i] )
-					displacement[i][d] = targetLandmarks[d][i] - sourceLandmarks[d][i];
+				displacement[i][d] = targetLandmarks[d][i] - sourceLandmarks[d][i];
 			}
 	}
 
@@ -446,6 +533,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 */
 	protected void computeW() {
 
+		System.out.println( "activePairs: " + XfmUtils.printArray( isPairActive ) );
 		initMatrices();
 
 		computeL();
@@ -453,7 +541,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 		final LinearSolver<DenseMatrix64F> solver;
 		// logger.debug("linear solver");
-		if( nLandmarks < ndims*ndims )
+		if( nLandmarksActive < ndims*ndims )
 		{
 			logger.info("pseudo inverse solver");
 			solver =  LinearSolverFactory.pseudoInverse(false);
@@ -462,12 +550,13 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			logger.info("linear solver");
 			solver =  LinearSolverFactory.linear(lMatrix.numCols);
 		}
-
+		
 		// solve linear system
 		solver.setA(lMatrix);
 		solver.solve(yMatrix, wMatrix);
 
 		reorganizeW();
+		
 	}
 
 	protected void computeL() {
@@ -499,15 +588,23 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	{
 		final DenseMatrix64F tmp = new DenseMatrix64F(ndims, ndims);
 
-		for (int i = 0; i < nLandmarks; i++) {
-
-			for (int d = 0; d < ndims; d++) {
-
-				CommonOps.scale(sourceLandmarks[d][i], I, tmp);
-				CommonOps.insert(tmp, pMatrix, i * ndims, d * ndims);
-
+		int i = 0;
+		int gi = 0;
+		while( i < nLandmarks )
+		{
+			if( !isPairActive[i])
+			{
+				i++;
+				continue;
 			}
-			CommonOps.insert(I, pMatrix, i * ndims, ndims * ndims);
+			for (int d = 0; d < ndims; d++)
+			{
+				CommonOps.scale( sourceLandmarks[d][i], I, tmp );
+				CommonOps.insert( tmp, pMatrix, gi * ndims, d * ndims );
+			}
+			CommonOps.insert( I, pMatrix, gi * ndims, ndims * ndims );
+			i++;
+			gi++;
 		}
 	}
 
@@ -518,21 +615,39 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	{
 		final double[] res = new double[ ndims ];
 
-		for (int i = 0; i < nLandmarks; i++) {
+		int i = 0;
+		int gi = 0;
+		while( i < nLandmarks )
+		{
+			if( !isPairActive[i] ){
+				i++;
+				continue;
+			}
 
 			final DenseMatrix64F G = computeReflexiveG();
-			CommonOps.insert( G, kMatrix, i * ndims, i * ndims );
+			CommonOps.insert( G, kMatrix, gi * ndims, gi * ndims );
 
-			for (int j = i + 1; j < nLandmarks; j++) {
-
+			int j  = i + 1;
+			int gj = gi + 1;
+			while( j <  nLandmarks )
+			{
+				if( !isPairActive[j] ){
+					j++;
+					continue;
+				}
 				srcPtDisplacement( i, j, res );
 				computeG( res, G );
 
-				CommonOps.insert( G, kMatrix, i * ndims, j * ndims );
-				CommonOps.insert( G, kMatrix, j * ndims, i * ndims );
+				CommonOps.insert( G, kMatrix, gi * ndims, gj * ndims );
+				CommonOps.insert( G, kMatrix, gj * ndims, gi * ndims );
+				
+				j++;
+				gj++;
 			}
+			
+			i++;
+			gi++;
 		}
-		// logger.debug(" kMatrix: \n" + kMatrix + "\n");
 	}
 
 	/**
@@ -542,17 +657,26 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	{
 		CommonOps.fill(yMatrix, 0);
 
-		for (int i = 0; i < nLandmarks; i++) {
-			for (int j = 0; j < ndims; j++) {
-				yMatrix.set(i * ndims + j, 0, displacement[i][j]);
+//		for (int i = 0; i < nLandmarks; i++) {
+		int i = 0;
+		int gi = 0;
+		while( i < nLandmarks )
+		{
+			if( !isPairActive[i]){
+				i++;
+				continue;
 			}
+			for (int j = 0; j < ndims; j++) {
+				yMatrix.set( gi * ndims + j, 0, displacement[i][j]);
+			}
+			i++;
+			gi++;
 		}
 		if (computeAffine) {
-			for (int i = 0; i < ndims * (ndims + 1); i++) {
-				yMatrix.set(nLandmarks * ndims + i, 0, 0);
+			for ( i = 0; i < ndims * (ndims + 1); i++) {
+				yMatrix.set( nLandmarksActive * ndims + i, 0, 0);
 			}
 		}
-
 	}
 
 	/**
@@ -560,22 +684,31 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 * the deformable, affine and translational portions of the transformation,
 	 * respectively.
 	 */
-	protected void reorganizeW() {
-
-		int ci = 0;
-
+	protected void reorganizeW() 
+	{
 		// the deformable (non-affine) part of the transform
-		for (int lnd = 0; lnd < nLandmarks; lnd++) {
-			for (int i = 0; i < ndims; i++) {
-				dMatrix.set(i, lnd, wMatrix.get(ci, 0));
+		int ci = 0;
+		int i = 0;
+		int gi = 0;
+		while( i < nLandmarks )
+		{
+			if( !isPairActive[i]){
+				i++;
+				continue;
+			}
+			for (int d = 0; d < ndims; d++) {
+				dMatrix.set( d, gi, wMatrix.get(ci, 0));
 				ci++;
 			}
+			i++;
+			gi++;
 		}
 
+		// the affine part of the transform
 		if (computeAffine) {
 			// the affine part of the transform
 			for (int j = 0; j < ndims; j++)
-				for (int i = 0; i < ndims; i++) {
+				for ( i = 0; i < ndims; i++) {
 					aMatrix[i][j] = wMatrix.get(ci, 0);
 					ci++;
 				}
@@ -586,8 +719,9 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 				ci++;
 			}
 		}
+		
 		wMatrix = null;
-
+		
 	}
 
 	public void computeG(final double[] pt, final DenseMatrix64F mtx) {
@@ -615,17 +749,19 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			tmpDisplacement[i] = 0;
 		}
 
-		for (int lnd = 0; lnd < dMatrix.getNumCols(); lnd++) 
+		int di = 0;
+		for (int lnd = 0; lnd < nLandmarks; lnd++) 
 		{
-//			if( isPairActive[ lnd ])
-//			{
+			if( isPairActive[ lnd ])
+			{
 				srcPtDisplacement( lnd, thispt, tmpDisplacement );
 				final double nrm = r2Logr( Math.sqrt( normSqrd( tmpDisplacement )));
 				
 				for (int d = 0; d < ndims; d++) 
-					result[d] += nrm * dMatrix.get(d, lnd);
-				
-//			}
+					result[d] += nrm * dMatrix.get( d, di );
+			
+				di++;
+			}
 		}
 	}
 	
@@ -676,9 +812,9 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 * @param pt
 	 * @param result
 	 */
-	public void apply(final double[] pt, final double[] result) {
-
-		computeDeformationContribution(pt, result);
+	public void apply(final double[] pt, final double[] result) 
+	{
+		computeDeformationContribution( pt, result );
 
 		if (aMatrix != null) {
 			// affine part
@@ -699,6 +835,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			}
 		}
 		/* TODO why is there no else? */
+		
 	}
 
 	/**
@@ -740,7 +877,8 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 */
 	protected void srcPtDisplacement(final int i, final int j,
 			final double[] res) {
-		for (int d = 0; d < ndims; d++) {
+		for (int d = 0; d < ndims; d++) 
+		{
 			res[d] = sourceLandmarks[d][i] - sourceLandmarks[d][j];
 		}
 	}
@@ -766,4 +904,5 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return nrm;
 	}
 
+	
 }

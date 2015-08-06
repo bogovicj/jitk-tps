@@ -145,6 +145,19 @@ public class XfmUtils {
 		return out;
 	}
 
+	public static final String printArray(boolean[] in) {
+		if (in == null)
+			return "null";
+		String out = "";
+		for (int i = 0; i < in.length; i++) {
+			if( in[i])
+				out += "1 ";
+			else
+				out += "0 ";
+		}
+		return out;
+	}
+	
 	public static final String printArray(float[][] in) {
 		if (in == null)
 			return "null";
