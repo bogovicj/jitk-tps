@@ -30,11 +30,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	private static final long serialVersionUID = -972934724062617822L;
 	
 	protected int ndims;
-
-	/* temporary vectors for intermediate calculations */
-	protected double[] tmp;
-	protected double[] tmpPt;
-	protected double[] tmpDisplacement;
 	
 	// keeps track of landmark pairs that are in use
 	protected boolean[] isPairActive;
@@ -88,9 +83,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 		this.ndims = ndims;
 
-		tmp = new double[ndims];
-		tmpPt = new double[ndims];
-		tmpDisplacement = new double[ndims];
 		gMatrix = new DenseMatrix64F(ndims, ndims);
 
 		/*
@@ -151,9 +143,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		this.nLandmarks = srcPts[0].length;
 		nLandmarksActive = this.nLandmarks;
 
-		tmp = new double[ndims];
-		tmpPt = new double[ndims];
-		tmpDisplacement = new double[ndims];
 		gMatrix = new DenseMatrix64F(ndims, ndims);
 
 		this.sourceLandmarks = srcPts;
@@ -496,10 +485,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return gMatrix;
 	}
 
-	protected void computeDeformationContribution(final double[] thispt) {
-		computeDeformationContribution(thispt, tmp);
-	}
-
 	protected void computeD() 
 	{
 		displacement = new double[nLandmarks][ndims];
@@ -743,6 +728,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	public void computeDeformationContribution(final double[] thispt,
 			final double[] result) {
 
+		double[] tmpDisplacement = new double[ ndims ];
 		for ( int i = 0; i < ndims; ++i ) 
 		{
 			result[i] = 0;
@@ -863,6 +849,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	@Override
 	public void applyInPlace(final double[] pt) {
 
+		double[] tmp = new double[ ndims ];
 		apply(pt, tmp);
 
 		for (int i = 0; i < ndims; ++i) {
