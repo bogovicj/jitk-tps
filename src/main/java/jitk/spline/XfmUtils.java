@@ -1,5 +1,7 @@
 package jitk.spline;
 
+import mpicbg.models.CoordinateTransform;
+
 /**
  * Class with helper methods for debugging and testing the this thin plate
  * spline implementation.
@@ -57,6 +59,41 @@ public class XfmUtils {
 		return pts;
 	}
 	
+	public static double maxError( double[][] sourcePoints, double[][] targetPoints, CoordinateTransform xfm )
+	{
+		return maxError( sourcePoints, targetPoints, xfm, false );
+	}
+	
+	public static double maxError( double[][] sourcePoints, double[][] targetPoints, CoordinateTransform xfm, boolean debug )
+	{
+		double maxError = 0.0;
+		
+		int D = sourcePoints.length;
+		int N = sourcePoints[ 0 ].length;
+		
+		double[] spt = new double[ sourcePoints.length ];
+		double[] tpt = new double[ sourcePoints.length ];
+		for( int i = 0; i < N; i++ )
+		{
+			for( int n = 0; n < D; n++ )
+			{
+				spt[ n ] = sourcePoints[ n ][ i ];
+				tpt[ n ] = targetPoints[ n ][ i ];
+			}
+				
+			double[] result = xfm.apply( spt );
+			double distance = distance( tpt, result );
+			
+			if( debug )
+				System.out.println( "distance at: " + i + " is " + distance );
+			
+			if( distance > maxError )
+				maxError = distance;
+		}
+		
+		return maxError;
+	}
+	
 	public static double[][] deepCopy( double[][] in ) {
 		double[][] out = new double[ in.length ][ in[0].length ];
 		for (int i = 0; i < in.length; i++)for (int j = 0; j < in[0].length; j++) {
@@ -105,6 +142,17 @@ public class XfmUtils {
 		}
 	}
 
+	public static double distance( double[] p1, double[] p2 )
+	{
+		int nd = p1.length;
+		double out = 0.0;
+		for (int d = 0; d < nd; d++) {
+			out += ( p1[d] - p2[d] ) * ( p1[d] - p2[d] );
+		}
+		
+		return Math.sqrt( out );
+	}
+	
 	public static double[] subtract(double[] p1, double[] p2) {
 		int nd = p1.length;
 		double[] out = new double[nd];

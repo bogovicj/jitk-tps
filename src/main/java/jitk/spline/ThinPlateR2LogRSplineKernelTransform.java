@@ -33,8 +33,12 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	/* temporary vectors for intermediate calculations */
 	protected double[] tmp;
-	protected double[] tmpPt;
 	protected double[] tmpDisplacement;
+	
+	/* bounding box */
+	protected double[] newBoxMin;
+	protected double[] newBoxMax;
+	
 	
 	// keeps track of landmark pairs that are in use
 	protected boolean[] isPairActive;
@@ -89,7 +93,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		this.ndims = ndims;
 
 		tmp = new double[ndims];
-		tmpPt = new double[ndims];
 		tmpDisplacement = new double[ndims];
 		gMatrix = new DenseMatrix64F(ndims, ndims);
 
@@ -152,7 +155,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		nLandmarksActive = this.nLandmarks;
 
 		tmp = new double[ndims];
-		tmpPt = new double[ndims];
 		tmpDisplacement = new double[ndims];
 		gMatrix = new DenseMatrix64F(ndims, ndims);
 
@@ -207,6 +209,11 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	public double[][] getSourceLandmarks()
 	{
 		return sourceLandmarks;
+	}
+	
+	public double[][] getTargetLandmarks()
+	{
+		return targetLandmarks;
 	}
 
 	public double[][] getAffine()
@@ -326,6 +333,11 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			isPairActive[ i ] = true;
 			nLandmarksActive++;
 		}
+	}
+	
+	public boolean isActive( final int i )
+	{
+		return isPairActive[ i ];
 	}
 	
 	public void removePoint( final int i )
@@ -459,8 +471,8 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	private void initMatrices() {
 
-		System.out.println( "nLandmarks: " + nLandmarks );
-		System.out.println( "nLandmarksActive: " + nLandmarksActive );
+//		System.out.println( "nLandmarks: " + nLandmarks );
+//		System.out.println( "nLandmarksActive: " + nLandmarksActive );
 		dMatrix = new DenseMatrix64F( ndims, nLandmarksActive );
 		kMatrix = new DenseMatrix64F( ndims * nLandmarksActive, ndims * nLandmarksActive );
 
@@ -496,7 +508,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return gMatrix;
 	}
 
-	protected void computeDeformationContribution(final double[] thispt) {
+	protected synchronized void computeDeformationContribution(final double[] thispt) {
 		computeDeformationContribution(thispt, tmp);
 	}
 
@@ -533,7 +545,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 */
 	protected void computeW() {
 
-		System.out.println( "activePairs: " + XfmUtils.printArray( isPairActive ) );
+//		System.out.println( "activePairs: " + XfmUtils.printArray( isPairActive ) );
 		initMatrices();
 
 		computeL();
@@ -740,7 +752,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		CommonOps.scale(w, mtx);
 	}
 
-	public void computeDeformationContribution(final double[] thispt,
+	public synchronized void computeDeformationContribution(final double[] thispt,
 			final double[] result) {
 
 		for ( int i = 0; i < ndims; ++i ) 
@@ -804,6 +816,11 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 		return result;
 	}
+	
+	public void apply(final double[] pt, final double[] result) 
+	{
+		apply( pt, result, false );
+	}
 
 	/**
 	 * Transform a source vector pt into a target vector result. pt and result
@@ -812,8 +829,16 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 * @param pt
 	 * @param result
 	 */
-	public void apply(final double[] pt, final double[] result) 
+	public void apply(final double[] pt, final double[] result, boolean debug ) 
 	{
+		if( debug )
+		{
+			System.out.println("nLandmarks " + nLandmarks );
+			System.out.println("nLandmarksActive " + nLandmarksActive );
+			System.out.println("dMatrix " + dMatrix.numRows + " " + dMatrix.numCols );
+			System.out.println("isPairActive " + XfmUtils.printArray( isPairActive ) );
+		}
+		
 		computeDeformationContribution( pt, result );
 
 		if (aMatrix != null) {
@@ -861,7 +886,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 * @param pt
 	 */
 	@Override
-	public void applyInPlace(final double[] pt) {
+	public synchronized void applyInPlace(final double[] pt) {
 
 		apply(pt, tmp);
 
@@ -869,7 +894,31 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			pt[i] = tmp[i];
 		}
 	}
+	
+	/**
+	 * Estimates the bounding box of this transformation.
+	 * Stores the results in local variables that are accessible via get methods.
+	 * @param min input minimum
+	 * @param max input maximum
+	 */
+	public void estimateBoundingBox( double[] min, double[] max )
+	{
+		newBoxMin = new double[ ndims ];
+		newBoxMax = new double[ ndims ];
+		
+		
+	}
+	
+	public double[] getBoxMin()
+	{
+		return newBoxMin;
+	}
 
+	public double[] getBoxMax()
+	{
+		return newBoxMax;
+	}
+	
 	/**
 	 * Computes the displacement between the i^th and j^th source points.
 	 *
