@@ -85,7 +85,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 */
 	public ThinPlateR2LogRSplineKernelTransform(final int ndims) {
 		// logger.info("initializing");
-
 		this.ndims = ndims;
 
 		gMatrix = new DenseMatrix64F(ndims, ndims);
@@ -334,6 +333,9 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	
 	public void removePoint( final int i )
 	{
+		if( isPairActive[i])
+			nLandmarksActive--;
+		
 		int addme = 0;
 		for( int j = 0; j < nLandmarks; j++ )
 		{
@@ -353,8 +355,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		}
 		nLandmarks--;
 		
-		if( isPairActive[i])
-			nLandmarksActive--;
+		
 	}
 
 	public void updateSourceLandmark(final int i, final double[] newSource) {
@@ -461,10 +462,8 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		this.computeAffine = estimateAffine;
 	}
 
-	private void initMatrices() {
-
-//		System.out.println( "nLandmarks: " + nLandmarks );
-//		System.out.println( "nLandmarksActive: " + nLandmarksActive );
+	private void initMatrices() 
+	{
 		dMatrix = new DenseMatrix64F( ndims, nLandmarksActive );
 		kMatrix = new DenseMatrix64F( ndims * nLandmarksActive, ndims * nLandmarksActive );
 
@@ -489,7 +488,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			wMatrix = new DenseMatrix64F( ndims * nLandmarksActive, 1 );
 			yMatrix = new DenseMatrix64F( ndims * nLandmarksActive, 1 );
 		}
-
 	}
 
 	protected DenseMatrix64F computeReflexiveG() {
@@ -531,9 +529,9 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 * Implements Equation (5) in Davis et al. and calls reorganizeW.
 	 *
 	 */
-	protected void computeW() {
+	protected void computeW()
+	{
 
-//		System.out.println( "activePairs: " + XfmUtils.printArray( isPairActive ) );
 		initMatrices();
 
 		computeL();
@@ -740,7 +738,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		CommonOps.scale(w, mtx);
 	}
 
-	public synchronized void computeDeformationContribution(final double[] thispt,
+	public void computeDeformationContribution(final double[] thispt,
 			final double[] result) {
 
 		double[] tmpDisplacement = new double[ ndims ];
@@ -875,7 +873,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 * @param pt
 	 */
 	@Override
-	public synchronized void applyInPlace(final double[] pt) {
+	public void applyInPlace(final double[] pt) {
 
 		double[] tmp = new double[ ndims ];
 		apply(pt, tmp);
