@@ -234,6 +234,11 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 		nLandmarks = srcPts[0].length;
 		nLandmarksActive = nLandmarks;
+
+		displacement = new double[ 2 * nLandmarks ][ ndims ];
+		isPairActive = new boolean[ 2 * nLandmarks ];
+		Arrays.fill( isPairActive, false );
+
 		containerSize = nLandmarks;
 		
 		assert srcPts.length == ndims && tgtPts.length == ndims : "Source and target landmark lists must have "
@@ -243,6 +248,19 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 		this.sourceLandmarks = srcPts;
 		this.targetLandmarks = tgtPts;
+
+		for (int i = 0; i < nLandmarks; ++i)
+		{
+			isPairActive[ i ] = true;
+			for (int d = 0; d < ndims; ++d)
+			{
+				displacement[i][d] = targetLandmarks[d][i] - sourceLandmarks[d][i];
+			}
+		}
+
+		isPairActive = new boolean[ nLandmarks ];
+		Arrays.fill( isPairActive, true );
+
 		computeD();
 	}
 
@@ -264,18 +282,27 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		nLandmarks = srcPts[0].length;
 		nLandmarksActive = nLandmarks;
 		
+		if( nLandmarks + 1 > containerSize )
+			expandLandmarkContainers( nLandmarks );
+
 		sourceLandmarks = new double[ndims][nLandmarks];
 		targetLandmarks = new double[ndims][nLandmarks];
 		displacement = new double[nLandmarks][ndims];
 		containerSize = nLandmarks;
 
-		for (int d = 0; d < ndims; ++d) {
-			for (int i = 0; i < nLandmarks; ++i) {
+		for (int i = 0; i < nLandmarks; ++i)
+		{
+			for (int d = 0; d < ndims; ++d)
+			{
 				sourceLandmarks[d][i] = srcPts[d][i];
 				targetLandmarks[d][i] = tgtPts[d][i];
 				displacement[i][d] = targetLandmarks[d][i] - sourceLandmarks[d][i];  
 			}
 		}
+
+		isPairActive = new boolean[ nLandmarks ];
+		Arrays.fill( isPairActive, true );
+
 	}
 	
 	public boolean validateTransformPoints()
@@ -415,7 +442,11 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	protected void expandLandmarkContainers() {
 		final int newSize = containerSize
 				+ (int) Math.round(increaseRaio * containerSize);
-		
+		expandLandmarkContainers( newSize );
+	}
+
+	protected void expandLandmarkContainers( int newSize )
+	{
 		 logger.debug("increasing container size from " + containerSize +
 		 " to " + newSize );
 		 
