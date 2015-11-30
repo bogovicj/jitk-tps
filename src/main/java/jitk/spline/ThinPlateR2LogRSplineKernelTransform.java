@@ -795,7 +795,89 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			}
 		}
 	}
-	
+
+	/**
+	 * The derivative of component j of the output point, with respect to x_d
+	 * (the dth component of the vector) is:
+	 * 
+	 * \sum_i D[ d, l ] G'( r ) ( x_j - l_ij ) / ( sqrt( N_l(p) ))
+	 * 
+	 * where: D is the D matrix i indexes the landmarks N_l(p) is the squared
+	 * euclidean norm between landmark l and point p l_ij is the jth component
+	 * of landmark i G' is the derivative of the kernel function. for a TPS, the
+	 * kernel function is (r^2)logr, the derivative wrt r of which is: r( 2logr
+	 * + 1 )
+	 * 
+	 * See the documentation for a derivation.
+	 * 
+	 * @param p
+	 *            The point at which to evaluate the derivative
+	 * @return
+	 */
+	public double[][] r2LogrDerivative( double[] p )
+	{
+		// derivativeMatrix[j][d] gives the derivative of component j with
+		// respect to component d
+		double[][] derivativeMatrix = new double[ ndims ][ ndims ];
+
+		double[] tmpDisplacement = new double[ ndims ];
+		Arrays.fill( tmpDisplacement, 0 );
+
+		int lmi = 0; // landmark index for active points
+		for ( int lnd = 0; lnd < nLandmarks; lnd++ )
+		{
+			if ( isPairActive[ lnd ] )
+			{
+				srcPtDisplacement( lnd, p, tmpDisplacement );
+
+				final double r2 = normSqrd( tmpDisplacement ); // squared radius
+				final double r = Math.sqrt( r2 ); // radius
+
+				// TODO if r2 is small or zero, there will be problems - put a
+				// check in.
+				final double term1 = r * ( 2 * Math.log( r ) + 1 ) / Math.sqrt( r2 );
+
+				for ( int d = 0; d < ndims; d++ )
+				{
+					for ( int j = 0; j < ndims; j++ )
+					{
+						final double multiplier = term1 * ( -tmpDisplacement[ j ] );
+						derivativeMatrix[ j ][ d ] += multiplier * dMatrix.get( d, lmi );
+					}
+				}
+				lmi++;
+			}
+		}
+
+		return derivativeMatrix;
+	}
+
+	public double[][] derivative( double[] p )
+	{
+		double[][] D = r2LogrDerivative( p );
+
+		if( aMatrix != null )
+		{
+			for ( int i = 0; i < ndims; i++ )
+				for ( int j = 0; j < ndims; j++ )
+					D[ i ][ j ] += aMatrix[ i ][ j ];
+		}
+
+		return D;
+	}
+
+	public void stepInDerivativeDirection( double[][] derivative, double[] start, double[] dest, double stepLength )
+	{
+		for ( int i = 0; i < ndims; i++ )
+		{
+			dest[ i ] = start[ i ];
+			for ( int j = 0; j < ndims; j++ )
+			{
+				dest[ i ] = derivative[ i ][ j ] * stepLength;
+			}
+		}
+	}
+
 	public void printXfmBacks2d( int maxx, int maxy, int delx, int dely )
 	{
 		double[] pt = new double[ 2 ];
@@ -914,7 +996,47 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			pt[i] = tmp[i];
 		}
 	}
-	
+
+	public void inverseTol( final double[] pt, final double[] guess, double tolerance, int maxIters )
+	{
+		// TODO - have a flag in the apply method to also return the derivative
+		// if requested
+		// to prevent duplicated effort
+
+		double error = 999 * tolerance;
+		double[][] mtx;
+		double[] guessXfm = new double[ ndims ];
+
+		apply( guess, guessXfm );
+		mtx = derivative( guess );
+
+		TransformInverseGradientDescent inv = new TransformInverseGradientDescent( ndims );
+		inv.setTarget( pt );
+		inv.setEstimate( guess );
+		inv.setEstimateXfm( guessXfm );
+		inv.setGradientMatrix( mtx );
+		inv.setStepSize( 1.9 * tolerance );
+		inv.setEps( 0.001 * tolerance );
+
+		int k = 0;
+		while ( error >= tolerance && k < maxIters )
+		{
+			mtx = derivative( guess );
+			inv.setGradientMatrix( mtx );
+			inv.oneIteration( false );
+
+			TransformInverseGradientDescent.copyVectorIntoArray( inv.getEstimate(), guess );
+			apply( guess, guessXfm );
+
+			inv.setEstimateXfm( guessXfm );
+			error = inv.getError();
+
+			System.out.println( "error: " + error );
+
+			k++;
+		}
+	}
+
 	/**
 	 * Estimates the bounding box of this transformation.
 	 * Stores the results in local variables that are accessible via get methods.

@@ -26,12 +26,25 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 
 	public Logger logger = LogManager.getLogger(ThinPlateR2LogRSplineKernelTransformTest.class.getName());
 
+	public void genPtListSimple2d()
+	{
+		ndims = 2;
+		srcPts = new double[][] { { -1.0, 0.0, 1.0, 0.0 }, // x
+		{ 0.0, -1.0, 0.0, 1.0 } }; // y
 
-	public void genPtListNoAffine1(){
-		N = 50;
-		final int D = 10;
+		tgtPts = new double[][] { { -2.0, 0.0, 2.0, 0.0 }, // x
+		{ 0.0, -2.0, 0.0, 2.0 } }; // y
+
+	}
+
+	public void genPtListNoAffine1()
+	{
+		genPtListNoAffine1( 50, 10 );
+	}
+
+	public void genPtListNoAffine1( int N, int D )
+	{
 		ndims = 3;
-
 		srcPts = new double[3][2*N];
 		tgtPts = new double[3][2*N];
 
@@ -63,6 +76,44 @@ public class ThinPlateR2LogRSplineKernelTransformTest {
 			k++;
 
 		}
+	}
+
+	@Test
+	public void testTPSInverse()
+	{
+		double[] target = new double[] { 0.0, 0.0 };
+		double[] guessBase = new double[] { 5.0, 5.0 };
+		double[] guess = new double[ 2 ];
+
+		double[][] mtx;
+		double error = 9999;
+
+		genPtListSimple2d();
+
+		// try for a few different initial guesses
+		for ( int xm = -1; xm <= 1; xm++ )
+			for ( int ym = -1; ym <= 1; ym++ )
+			{
+				System.arraycopy( guessBase, 0, guess, 0, ndims );
+				guess[ 0 ] *= xm;
+				guess[ 1 ] *= ym;
+
+				final ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform( ndims, srcPts, tgtPts );
+				tps.setDoAffine( false );
+				tps.solve();
+
+				tps.inverseTol( target, guess, 0.5, 200 );
+				logger.debug( "final guess: " + XfmUtils.printArray( guess ) );
+
+				assertEquals( "within tolerance 0.5 x", 0.0, guess[ 0 ], 0.5 );
+				assertEquals( "within tolerance 0.5 y", 0.0, guess[ 1 ], 0.5 );
+
+				tps.inverseTol( target, guess, 0.1, 200 );
+				logger.debug( "final guess: " + XfmUtils.printArray( guess ) );
+
+				assertEquals( "within tolerance 0.1 x", 0.0, guess[ 0 ], 0.1 );
+				assertEquals( "within tolerance 0.1 y", 0.0, guess[ 1 ], 0.1 );
+			}
 	}
 
 	@Test
