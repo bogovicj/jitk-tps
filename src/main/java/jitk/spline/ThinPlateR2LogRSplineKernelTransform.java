@@ -158,8 +158,9 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	}
 	
-	public ThinPlateR2LogRSplineKernelTransform deepCopy()
+	public synchronized ThinPlateR2LogRSplineKernelTransform deepCopy()
 	{
+		// TODO may need to synchronize this ?
 		ThinPlateR2LogRSplineKernelTransform tps = new 
 				ThinPlateR2LogRSplineKernelTransform( ndims, 
 						XfmUtils.deepCopy(sourceLandmarks), targetLandmarks  );
@@ -229,7 +230,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 *
 	 * @param targetPts the collection of target/destination points
 	 */
-	public void setLandmarks(final double[][] srcPts, final double[][] tgtPts)
+	public synchronized void setLandmarks(final double[][] srcPts, final double[][] tgtPts)
 			throws IllegalArgumentException {
 
 		nLandmarks = srcPts[0].length;
@@ -271,7 +272,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 *
 	 * @param targetPts the collection of target/destination points
 	 */
-	public void setLandmarks(final float[][] srcPts, final float[][] tgtPts)
+	public synchronized void setLandmarks(final float[][] srcPts, final float[][] tgtPts)
 			throws IllegalArgumentException {
 
 		assert srcPts.length == ndims && tgtPts.length == ndims : "Source and target landmark lists must have "
@@ -335,7 +336,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return true;
 	}
 	
-	public void disableLandmarkPair( final int i )
+	public synchronized void disableLandmarkPair( final int i )
 	{
 		if( isPairActive[ i ] )
 		{
@@ -344,7 +345,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		}
 	}
 	
-	public void enableLandmarkPair( final int i )
+	public synchronized void enableLandmarkPair( final int i )
 	{
 		if( !isPairActive[ i ] )
 		{
@@ -358,7 +359,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return isPairActive[ i ];
 	}
 	
-	public void removePoint( final int i )
+	public synchronized void removePoint( final int i )
 	{
 		if( isPairActive[i])
 			nLandmarksActive--;
@@ -385,35 +386,35 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		
 	}
 
-	public void updateSourceLandmark(final int i, final double[] newSource) {
+	public synchronized void updateSourceLandmark(final int i, final double[] newSource) {
 		for (int d = 0; d < ndims; d++) {
 			sourceLandmarks[d][i] = newSource[d];
 			displacement[i][d] = targetLandmarks[d][i] - sourceLandmarks[d][i];  
 		}
 	}
 
-	public void updateTargetLandmark(final int i, final double[] newTarget) {
+	public synchronized void updateTargetLandmark(final int i, final double[] newTarget) {
 		for (int d = 0; d < ndims; d++) {
 			targetLandmarks[d][i] = newTarget[d];
 			displacement[i][d] = targetLandmarks[d][i] - sourceLandmarks[d][i];  
 		}
 	}
 
-	public void updateSourceLandmark(final int i, final float[] newSource) {
+	public synchronized void updateSourceLandmark(final int i, final float[] newSource) {
 		for (int d = 0; d < ndims; d++) {
 			sourceLandmarks[d][i] = newSource[d];
 			displacement[i][d] = targetLandmarks[d][i] - sourceLandmarks[d][i];  
 		}
 	}
 
-	public void updateTargetLandmark(final int i, final float[] newTarget) {
+	public synchronized void updateTargetLandmark(final int i, final float[] newTarget) {
 		for (int d = 0; d < ndims; d++) {
 			targetLandmarks[d][i] = newTarget[d];
 			displacement[i][d] = targetLandmarks[d][i] - sourceLandmarks[d][i];  
 		}
 	}
 
-	public void addMatch(final float[] source, final float[] target) {
+	public synchronized void addMatch(final float[] source, final float[] target) {
 		if (nLandmarks + 1 >= containerSize) {
 			expandLandmarkContainers();
 		}
@@ -426,7 +427,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		nLandmarksActive++;
 	}
 
-	public void addMatch(final double[] source, final double[] target) {
+	public synchronized void addMatch(final double[] source, final double[] target) {
 		if (nLandmarks + 1 >= containerSize) {
 			expandLandmarkContainers();
 		}
@@ -439,13 +440,13 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		nLandmarksActive++;
 	}
 
-	protected void expandLandmarkContainers() {
+	protected synchronized void expandLandmarkContainers() {
 		final int newSize = containerSize
 				+ (int) Math.round(increaseRaio * containerSize);
 		expandLandmarkContainers( newSize );
 	}
 
-	protected void expandLandmarkContainers( int newSize )
+	protected synchronized void expandLandmarkContainers( int newSize )
 	{
 		 logger.debug("increasing container size from " + containerSize +
 		 " to " + newSize );
@@ -550,7 +551,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 *
 	 */
-	public void solve() {
+	public synchronized void solve() {
 		computeW();
 	}
 
