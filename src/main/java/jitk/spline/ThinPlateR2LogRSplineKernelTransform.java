@@ -835,7 +835,14 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 				// TODO if r2 is small or zero, there will be problems - put a
 				// check in.
-				final double term1 = r * ( 2 * Math.log( r ) + 1 ) / Math.sqrt( r2 );
+				// The check is below.
+				// The continue statement is akin to term1 = 0.0.
+				// This should be correct, but needs a double-checking
+				final double term1;
+				if ( r < EPS )
+					continue;
+				else
+					term1 = r * ( 2 * Math.log( r ) + 1 ) / Math.sqrt( r2 );
 
 				for ( int d = 0; d < ndims; d++ )
 				{
@@ -852,15 +859,18 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return derivativeMatrix;
 	}
 
-	public double[][] derivative( double[] p )
+	public double[][] jacobian( double[] p )
 	{
 		double[][] D = r2LogrDerivative( p );
 
-		if( aMatrix != null )
+		if ( aMatrix != null )
 		{
 			for ( int i = 0; i < ndims; i++ )
 				for ( int j = 0; j < ndims; j++ )
-					D[ i ][ j ] += aMatrix[ i ][ j ];
+					if ( i == j )
+						D[ i ][ j ] += 1 + aMatrix[ i ][ j ];
+					else
+						D[ i ][ j ] += aMatrix[ i ][ j ];
 		}
 
 		return D;
@@ -994,47 +1004,179 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 		for (int i = 0; i < ndims; ++i) {
 			pt[i] = tmp[i];
+	/**
+	 * Determine if a point whose inverse we want is close to a landmark. If so,
+	 * return the index of that landmark, and use that to help.
+	 * 
+	 * @param pt
+	 * @param tolerance
+	 * @return a pair containing the closest landmark point and its squared
+	 *         distance to that landmark
+	 */
+	public Pair< Integer, Double > closestTargetLandmarkAndDistance( final double[] target )
+	{
+		int idx = -1;
+		double distSqr = Double.MAX_VALUE;
+		double thisDist = 0.0;
+
+		double[] err = new double[ this.ndims ];
+
+		for ( int l = 0; l < this.nLandmarks; l++ )
+		{
+			tgtPtDisplacement( l, target, err );
+			thisDist = normSqrd( err );
+
+			if ( thisDist < distSqr )
+			{
+				distSqr = thisDist;
+				idx = l;
+			}
 		}
+
+		return new Pair< Integer, Double >( idx, distSqr );
 	}
 
-	public void inverseTol( final double[] pt, final double[] guess, double tolerance, int maxIters )
+	public double[] initialGuessAtInverse( final double[] target, double tolerance )
+	{
+		Pair< Integer, Double > lmAndDist = closestTargetLandmarkAndDistance( target );
+		logger.trace( "nearest landmark error: " + lmAndDist.snd );
+
+		double[] initialGuess;
+		int idx = lmAndDist.fst;
+		logger.trace( "initial guess by landmark: " + idx );
+
+		initialGuess = new double[ ndims ];
+		for ( int i = 0; i < ndims; i++ )
+			initialGuess[ i ] = sourceLandmarks[ i ][ idx ];
+
+		logger.trace( "initial guess by affine " );
+		double[] initialGuessAffine = inverseGuessAffineInv( target );
+
+		double[] resL = apply( initialGuess );
+		double[] resA = apply( initialGuessAffine );
+
+		for ( int i = 0; i < ndims; i++ )
+		{
+			resL[ i ] -= target[ i ];
+			resA[ i ] -= target[ i ];
+		}
+
+		double errL = normSqrd( resL );
+		double errA = normSqrd( resA );
+
+		logger.trace( "landmark guess error: " + errL );
+		logger.trace( "affine guess error  : " + errA );
+
+		if ( errA < errL )
+		{
+			logger.trace( "Using affine initialization" );
+			initialGuess = initialGuessAffine;
+		}
+		else
+		{
+			logger.trace( "Using landmark initialization" );
+		}
+
+		return initialGuess;
+	}
+
+	public double[] inverseGuessAffineInv( double[] target )
+	{
+		// Here, mtx is A + I
+		DenseMatrix64F mtx = new DenseMatrix64F( ndims + 1, ndims + 1 );
+		DenseMatrix64F vec = new DenseMatrix64F( ndims + 1, 1 );
+		for ( int i = 0; i < ndims; i++ )
+		{
+			for ( int j = 0; j < ndims; j++ )
+			{
+				if ( i == j )
+					mtx.set( i, j, 1 + aMatrix[ i ][ j ] );
+				else
+					mtx.set( i, j, aMatrix[ i ][ j ] );
+			}
+			mtx.set( i, ndims, bVector[ i ] );
+			vec.set( i, 0, target[ i ] );
+		}
+		mtx.set( ndims, ndims, 1.0 );
+		vec.set( ndims, 0, 1.0 );
+
+		DenseMatrix64F res = new DenseMatrix64F( ndims + 1, 1 );
+
+		CommonOps.solve( mtx, vec, res );
+
+		DenseMatrix64F test = new DenseMatrix64F( ndims + 1, 1 );
+		CommonOps.mult( mtx, res, test );
+
+		logger.trace( "test result: " + test );
+
+		double[] resOut = new double[ ndims ];
+		System.arraycopy( res.data, 0, resOut, 0, ndims );
+
+		return resOut;
+	}
+
+	public int inverseTol( final double[] pt, final double[] guess, double tolerance, int maxIters )
 	{
 		// TODO - have a flag in the apply method to also return the derivative
 		// if requested
 		// to prevent duplicated effort
 
+		double c = 0.0001;
+		double beta = 0.7;
 		double error = 999 * tolerance;
 		double[][] mtx;
 		double[] guessXfm = new double[ ndims ];
 
 		apply( guess, guessXfm );
-		mtx = derivative( guess );
+		mtx = jacobian( guess );
 
-		TransformInverseGradientDescent inv = new TransformInverseGradientDescent( ndims );
+		TransformInverseGradientDescent inv = new TransformInverseGradientDescent( ndims, this );
 		inv.setTarget( pt );
 		inv.setEstimate( guess );
 		inv.setEstimateXfm( guessXfm );
-		inv.setGradientMatrix( mtx );
-		inv.setStepSize( 1.9 * tolerance );
-		inv.setEps( 0.001 * tolerance );
+		inv.setJacobian( mtx );
+
+		error = inv.getError();
+		double t0 = error;
+		double t = 1.0;
 
 		int k = 0;
 		while ( error >= tolerance && k < maxIters )
 		{
-			mtx = derivative( guess );
-			inv.setGradientMatrix( mtx );
-			inv.oneIteration( false );
+			logger.trace( "iteration : " + k );
+
+			mtx = jacobian( guess );
+			inv.setJacobian( mtx );
+			inv.computeDirection();
+
+			logger.trace( "initial step size: " + t0 );
+			t = inv.backtrackingLineSearch( c, beta, 15, t0 );
+			logger.trace( "final step size  : " + t );
+
+			if ( t == 0.0 )
+				break;
+
+			inv.updateEstimate( t );
+			inv.updateError();
 
 			TransformInverseGradientDescent.copyVectorIntoArray( inv.getEstimate(), guess );
 			apply( guess, guessXfm );
 
+			t0 = error;
+
 			inv.setEstimateXfm( guessXfm );
 			error = inv.getError();
 
-			System.out.println( "error: " + error );
+			logger.trace( "guess       : " + XfmUtils.printArray( guess ) );
+			logger.trace( "guessXfm    : " + XfmUtils.printArray( guessXfm ) );
+			logger.trace( "error vector: " + XfmUtils.printArray( inv.getErrorVector().data ) );
+			logger.trace( "error       : " + NormOps.normP2( inv.getErrorVector() ) );
+			logger.trace( "abs error   : " + error );
+			logger.trace( "" );
 
 			k++;
 		}
+		return k;
 	}
 
 	/**
