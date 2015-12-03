@@ -10,6 +10,9 @@ import org.ejml.data.DenseMatrix64F;
 import org.ejml.factory.LinearSolver;
 import org.ejml.factory.LinearSolverFactory;
 import org.ejml.ops.CommonOps;
+import org.ejml.ops.NormOps;
+
+import com.sun.tools.javac.util.Pair;
 
 /**
  * Abstract superclass for kernel transform methods, for example,
@@ -1004,6 +1007,9 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 		for (int i = 0; i < ndims; ++i) {
 			pt[i] = tmp[i];
+		}
+	}
+	
 	/**
 	 * Determine if a point whose inverse we want is close to a landmark. If so,
 	 * return the index of that landmark, and use that to help.
@@ -1229,6 +1235,13 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		}
 	}
 
+	protected void tgtPtDisplacement(final int i, final double[] pt,
+			final double[] res) {
+		for (int d = 0; d < ndims; d++) {
+			res[d] = targetLandmarks[d][i] - pt[d];
+		}
+	}
+	
 	private static double r2Logr(final double r) {
 		double nrm = 0;
 		if (r > EPS) {
