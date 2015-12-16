@@ -70,6 +70,8 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	protected boolean computeAffine = true;
 
+	protected boolean isSolved = false;
+
 	protected int nLandmarks;
 
 	protected int nLandmarksActive;
@@ -603,6 +605,12 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	public synchronized void solve()
 	{
 		computeW();
+		isSolved = true;
+	}
+
+	public boolean isSolved()
+	{
+		return isSolved;
 	}
 
 	/**
