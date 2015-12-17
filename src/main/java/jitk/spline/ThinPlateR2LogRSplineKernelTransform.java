@@ -15,9 +15,8 @@ import org.ejml.ops.NormOps;
 import com.sun.tools.javac.util.Pair;
 
 /**
- * Abstract superclass for kernel transform methods, for example,
- * {@link ThinPlateSplineKernelTransform}. Ported from itk's
- * itkKernelTransform.hxx
+ * Implements a thin plate spline transform.
+ * Began as a port of itk's itkKernelTransform.hxx
  * <p>
  * M. H. Davis, a Khotanzad, D. P. Flamig, and S. E. Harms, “A physics-based
  * coordinate transformation for 3-D image matching.,” IEEE Trans. Med. Imaging,
@@ -939,6 +938,16 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return derivativeMatrix;
 	}
 
+	/**
+	 * Computes the jacobian of this tranformation around the point p.
+	 * <p>
+	 * The result is stored in a new double array where element [ i ][ j ] gives
+	 * the derivative of variable i with respect to variable j
+	 * 
+	 * @param p
+	 *            the point
+	 * @return the jacobian array
+	 */
 	public double[][] jacobian( double[] p )
 	{
 		double[][] D = r2LogrDerivative( p );
