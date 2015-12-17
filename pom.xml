@@ -28,6 +28,10 @@
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg</artifactId>
 			</dependency>
+		<dependency>
+			<groupId>au.com.bytecode</groupId>
+			<artifactId>opencsv</artifactId>
+		</dependency>
 	</dependencies>
 	<scm>
 		<url>https://github.com/bogovicj/jitk-tps</url>
