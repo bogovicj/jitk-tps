@@ -199,15 +199,19 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 		tps.nLandmarks = this.nLandmarks;
 		tps.nLandmarksActive = this.nLandmarksActive;
+		tps.isSolved = true;
 
 		return tps;
 	}
 
 	public ThinPlateR2LogRSplineKernelTransform deepCopy2()
 	{
-		return new ThinPlateR2LogRSplineKernelTransform(
+		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform(
 				XfmUtils.deepCopy( sourceLandmarks ), XfmUtils.deepCopy( aMatrix ),
 				bVector.clone(), dMatrix.data.clone() );
+		tps.isSolved = true;
+
+		return tps;
 	}
 
 	public int getNumLandmarks()
