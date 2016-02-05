@@ -2,8 +2,6 @@ package jitk.spline;
 
 import java.util.Arrays;
 
-import mpicbg.models.CoordinateTransform;
-
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.ejml.data.DenseMatrix64F;
@@ -14,6 +12,8 @@ import org.ejml.ops.NormOps;
 
 import com.sun.tools.javac.util.Pair;
 
+import mpicbg.models.CoordinateTransform;
+
 /**
  * Implements a thin plate spline transform.
  * Began as a port of itk's itkKernelTransform.hxx
@@ -21,10 +21,10 @@ import com.sun.tools.javac.util.Pair;
  * M. H. Davis, a Khotanzad, D. P. Flamig, and S. E. Harms, “A physics-based
  * coordinate transformation for 3-D image matching.,” IEEE Trans. Med. Imaging,
  * vol. 16, no. 3, pp. 317–28, Jun. 1997.
- * 
+ *
  * @author Kitware (ITK)
  * @author John Bogovic
- * 
+ *
  */
 public class ThinPlateR2LogRSplineKernelTransform implements
 		CoordinateTransform
@@ -169,8 +169,8 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			final double[] dMatrixData )
 	{
 
-		this.ndims = srcPts.length;
-		this.nLandmarks = srcPts[ 0 ].length;
+		ndims = srcPts.length;
+		nLandmarks = srcPts[ 0 ].length;
 		nLandmarksActive = this.nLandmarks;
 
 		gMatrix = new DenseMatrix64F( ndims, ndims );
@@ -182,12 +182,16 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		dMatrix = new DenseMatrix64F( ndims, nLandmarks );
 		dMatrix.setData( dMatrixData );
 
+		isPairActive = new boolean[ nLandmarks ];
+		Arrays.fill( isPairActive, true );
+
+		containerSize = nLandmarks;
 	}
 
 	public synchronized ThinPlateR2LogRSplineKernelTransform deepCopy()
 	{
 		// TODO may need to synchronize this ?
-		ThinPlateR2LogRSplineKernelTransform tps = new
+		final ThinPlateR2LogRSplineKernelTransform tps = new
 				ThinPlateR2LogRSplineKernelTransform( ndims,
 						XfmUtils.deepCopy( sourceLandmarks ), targetLandmarks );
 
@@ -205,7 +209,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	public ThinPlateR2LogRSplineKernelTransform deepCopy2()
 	{
-		ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform(
+		final ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform(
 				XfmUtils.deepCopy( sourceLandmarks ), XfmUtils.deepCopy( aMatrix ),
 				bVector.clone(), dMatrix.data.clone() );
 		tps.isSolved = true;
@@ -255,9 +259,9 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	/*
 	 * Sets the source and target landmarks for this KernelTransform object
-	 * 
+	 *
 	 * @param sourcePts the collection of source points
-	 * 
+	 *
 	 * @param targetPts the collection of target/destination points
 	 */
 	public synchronized void setLandmarks( final double[][] srcPts, final double[][] tgtPts )
@@ -298,9 +302,9 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	/*
 	 * Sets the source and target landmarks for this KernelTransform object
-	 * 
+	 *
 	 * @param sourcePts the collection of source points
-	 * 
+	 *
 	 * @param targetPts the collection of target/destination points
 	 */
 	public synchronized void setLandmarks( final float[][] srcPts, final float[][] tgtPts )
@@ -340,8 +344,8 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	public boolean validateTransformPoints()
 	{
-		double[] validtmp = new double[ ndims ];
-		double[] pt = new double[ ndims ];
+		final double[] validtmp = new double[ ndims ];
+		final double[] pt = new double[ ndims ];
 
 		for ( int i = 0; i < nLandmarksActive; i++ )
 		{
@@ -354,7 +358,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			apply( pt, validtmp );
 			for ( int d = 0; d < ndims; d++ )
 			{
-				double diff = targetLandmarks[ d ][ i ] - validtmp[ d ];
+				final double diff = targetLandmarks[ d ][ i ] - validtmp[ d ];
 				if ( diff > 0.1 || diff < -0.1 )
 				{
 					System.out.println( "error for landmark: " + i );
@@ -492,7 +496,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		expandLandmarkContainers( newSize );
 	}
 
-	protected synchronized void expandLandmarkContainers( int newSize )
+	protected synchronized void expandLandmarkContainers( final int newSize )
 	{
 		logger.debug( "increasing container size from " + containerSize +
 				" to " + newSize );
@@ -620,7 +624,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 * The main workhorse method.
 	 * <p>
 	 * Implements Equation (5) in Davis et al. and calls reorganizeW.
-	 * 
+	 *
 	 */
 	protected void computeW()
 	{
@@ -852,7 +856,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			final double[] result )
 	{
 
-		double[] tmpDisplacement = new double[ ndims ];
+		final double[] tmpDisplacement = new double[ ndims ];
 		for ( int i = 0; i < ndims; ++i )
 		{
 			result[ i ] = 0;
@@ -878,28 +882,28 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 * The derivative of component j of the output point, with respect to x_d
 	 * (the dth component of the vector) is:
-	 * 
+	 *
 	 * \sum_i D[ d, l ] G'( r ) ( x_j - l_ij ) / ( sqrt( N_l(p) ))
-	 * 
+	 *
 	 * where: D is the D matrix i indexes the landmarks N_l(p) is the squared
 	 * euclidean norm between landmark l and point p l_ij is the jth component
 	 * of landmark i G' is the derivative of the kernel function. for a TPS, the
 	 * kernel function is (r^2)logr, the derivative wrt r of which is: r( 2logr
 	 * + 1 )
-	 * 
+	 *
 	 * See the documentation for a derivation.
-	 * 
+	 *
 	 * @param p
 	 *            The point at which to evaluate the derivative
 	 * @return
 	 */
-	public double[][] r2LogrDerivative( double[] p )
+	public double[][] r2LogrDerivative( final double[] p )
 	{
 		// derivativeMatrix[j][d] gives the derivative of component j with
 		// respect to component d
-		double[][] derivativeMatrix = new double[ ndims ][ ndims ];
+		final double[][] derivativeMatrix = new double[ ndims ][ ndims ];
 
-		double[] tmpDisplacement = new double[ ndims ];
+		final double[] tmpDisplacement = new double[ ndims ];
 		Arrays.fill( tmpDisplacement, 0 );
 
 		int lmi = 0; // landmark index for active points
@@ -943,14 +947,14 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 * <p>
 	 * The result is stored in a new double array where element [ i ][ j ] gives
 	 * the derivative of variable i with respect to variable j
-	 * 
+	 *
 	 * @param p
 	 *            the point
 	 * @return the jacobian array
 	 */
-	public double[][] jacobian( double[] p )
+	public double[][] jacobian( final double[] p )
 	{
-		double[][] D = r2LogrDerivative( p );
+		final double[][] D = r2LogrDerivative( p );
 
 		if ( aMatrix != null )
 		{
@@ -965,7 +969,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return D;
 	}
 
-	public void stepInDerivativeDirection( double[][] derivative, double[] start, double[] dest, double stepLength )
+	public void stepInDerivativeDirection( final double[][] derivative, final double[] start, final double[] dest, final double stepLength )
 	{
 		for ( int i = 0; i < ndims; i++ )
 		{
@@ -977,10 +981,10 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		}
 	}
 
-	public void printXfmBacks2d( int maxx, int maxy, int delx, int dely )
+	public void printXfmBacks2d( final int maxx, final int maxy, final int delx, final int dely )
 	{
-		double[] pt = new double[ 2 ];
-		double[] result = new double[ 2 ];
+		final double[] pt = new double[ 2 ];
+		final double[] result = new double[ 2 ];
 		for ( int x = 0; x < maxx; x += delx )
 			for ( int y = 0; y < maxy; y += dely )
 			{
@@ -995,7 +999,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 * Transforms the input point according to the affine part of the thin plate
 	 * spline stored by this object.
-	 * 
+	 *
 	 * @param pt
 	 *            the point to be transformed
 	 * @return the transformed point
@@ -1030,11 +1034,11 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 * Transform a source vector pt into a target vector result. pt and result
 	 * must NOT be the same vector.
-	 * 
+	 *
 	 * @param pt
 	 * @param result
 	 */
-	public void apply( final double[] pt, final double[] result, boolean debug )
+	public void apply( final double[] pt, final double[] result, final boolean debug )
 	{
 		if ( debug )
 		{
@@ -1077,7 +1081,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 * Transforms the input point according to the thin plate spline stored by
 	 * this object.
-	 * 
+	 *
 	 * @param pt
 	 *            the point to be transformed
 	 * @return the transformed point
@@ -1094,14 +1098,14 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	/**
 	 * Transform pt in place.
-	 * 
+	 *
 	 * @param pt
 	 */
 	@Override
 	public void applyInPlace( final double[] pt )
 	{
 
-		double[] tmp = new double[ ndims ];
+		final double[] tmp = new double[ ndims ];
 		apply( pt, tmp );
 
 		for ( int i = 0; i < ndims; ++i )
@@ -1113,7 +1117,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 * Determine if a point whose inverse we want is close to a landmark. If so,
 	 * return the index of that landmark, and use that to help.
-	 * 
+	 *
 	 * @param pt
 	 * @param tolerance
 	 * @return a pair containing the closest landmark point and its squared
@@ -1125,7 +1129,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		double distSqr = Double.MAX_VALUE;
 		double thisDist = 0.0;
 
-		double[] err = new double[ this.ndims ];
+		final double[] err = new double[ this.ndims ];
 
 		for ( int l = 0; l < this.nLandmarks; l++ )
 		{
@@ -1142,13 +1146,13 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return new Pair< Integer, Double >( idx, distSqr );
 	}
 
-	public double[] initialGuessAtInverse( final double[] target, double tolerance )
+	public double[] initialGuessAtInverse( final double[] target, final double tolerance )
 	{
-		Pair< Integer, Double > lmAndDist = closestTargetLandmarkAndDistance( target );
+		final Pair< Integer, Double > lmAndDist = closestTargetLandmarkAndDistance( target );
 		logger.trace( "nearest landmark error: " + lmAndDist.snd );
 
 		double[] initialGuess;
-		int idx = lmAndDist.fst;
+		final int idx = lmAndDist.fst;
 		logger.trace( "initial guess by landmark: " + idx );
 
 		initialGuess = new double[ ndims ];
@@ -1156,10 +1160,10 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			initialGuess[ i ] = sourceLandmarks[ i ][ idx ];
 
 		logger.trace( "initial guess by affine " );
-		double[] initialGuessAffine = inverseGuessAffineInv( target );
+		final double[] initialGuessAffine = inverseGuessAffineInv( target );
 
-		double[] resL = apply( initialGuess );
-		double[] resA = apply( initialGuessAffine );
+		final double[] resL = apply( initialGuess );
+		final double[] resA = apply( initialGuessAffine );
 
 		for ( int i = 0; i < ndims; i++ )
 		{
@@ -1167,8 +1171,8 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			resA[ i ] -= target[ i ];
 		}
 
-		double errL = normSqrd( resL );
-		double errA = normSqrd( resA );
+		final double errL = normSqrd( resL );
+		final double errA = normSqrd( resA );
 
 		logger.trace( "landmark guess error: " + errL );
 		logger.trace( "affine guess error  : " + errA );
@@ -1186,11 +1190,11 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return initialGuess;
 	}
 
-	public double[] inverseGuessAffineInv( double[] target )
+	public double[] inverseGuessAffineInv( final double[] target )
 	{
 		// Here, mtx is A + I
-		DenseMatrix64F mtx = new DenseMatrix64F( ndims + 1, ndims + 1 );
-		DenseMatrix64F vec = new DenseMatrix64F( ndims + 1, 1 );
+		final DenseMatrix64F mtx = new DenseMatrix64F( ndims + 1, ndims + 1 );
+		final DenseMatrix64F vec = new DenseMatrix64F( ndims + 1, 1 );
 		for ( int i = 0; i < ndims; i++ )
 		{
 			for ( int j = 0; j < ndims; j++ )
@@ -1206,37 +1210,37 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		mtx.set( ndims, ndims, 1.0 );
 		vec.set( ndims, 0, 1.0 );
 
-		DenseMatrix64F res = new DenseMatrix64F( ndims + 1, 1 );
+		final DenseMatrix64F res = new DenseMatrix64F( ndims + 1, 1 );
 
 		CommonOps.solve( mtx, vec, res );
 
-		DenseMatrix64F test = new DenseMatrix64F( ndims + 1, 1 );
+		final DenseMatrix64F test = new DenseMatrix64F( ndims + 1, 1 );
 		CommonOps.mult( mtx, res, test );
 
 		logger.trace( "test result: " + test );
 
-		double[] resOut = new double[ ndims ];
+		final double[] resOut = new double[ ndims ];
 		System.arraycopy( res.data, 0, resOut, 0, ndims );
 
 		return resOut;
 	}
 
-	public int inverseTol( final double[] pt, final double[] guess, double tolerance, int maxIters )
+	public int inverseTol( final double[] pt, final double[] guess, final double tolerance, final int maxIters )
 	{
 		// TODO - have a flag in the apply method to also return the derivative
 		// if requested
 		// to prevent duplicated effort
 
-		double c = 0.0001;
-		double beta = 0.7;
+		final double c = 0.0001;
+		final double beta = 0.7;
 		double error = 999 * tolerance;
 		double[][] mtx;
-		double[] guessXfm = new double[ ndims ];
+		final double[] guessXfm = new double[ ndims ];
 
 		apply( guess, guessXfm );
 		mtx = jacobian( guess );
 
-		TransformInverseGradientDescent inv = new TransformInverseGradientDescent( ndims, this );
+		final TransformInverseGradientDescent inv = new TransformInverseGradientDescent( ndims, this );
 		inv.setTarget( pt );
 		inv.setEstimate( guess );
 		inv.setEstimateXfm( guessXfm );
@@ -1288,13 +1292,13 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 * Estimates the bounding box of this transformation. Stores the results in
 	 * local variables that are accessible via get methods.
-	 * 
+	 *
 	 * @param min
 	 *            input minimum
 	 * @param max
 	 *            input maximum
 	 */
-	public void estimateBoundingBox( double[] min, double[] max )
+	public void estimateBoundingBox( final double[] min, final double[] max )
 	{
 		newBoxMin = new double[ ndims ];
 		newBoxMax = new double[ ndims ];
@@ -1312,7 +1316,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	/**
 	 * Computes the displacement between the i^th and j^th source points.
-	 * 
+	 *
 	 * Stores the result in the input array 'res' Does not validate inputs.
 	 */
 	protected void srcPtDisplacement( final int i, final int j,
@@ -1327,7 +1331,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 * Computes the displacement between the i^th source point and the input
 	 * point.
-	 * 
+	 *
 	 * Stores the result in the input array 'res'. Does not validate inputs.
 	 */
 	protected void srcPtDisplacement( final int i, final double[] pt,
@@ -1343,7 +1347,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	/**
 	 * Computes the displacement between the i^th source point and the input
 	 * point.
-	 * 
+	 *
 	 * Stores the result in the input array 'res'. Does not validate inputs.
 	 */
 	protected void tgtPtDisplacement( final int i, final double[] pt,
