@@ -182,6 +182,10 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		dMatrix = new DenseMatrix64F( ndims, nLandmarks );
 		dMatrix.setData( dMatrixData );
 
+		isPairActive = new boolean[ nLandmarks ];
+		Arrays.fill( isPairActive, true );
+
+		containerSize = nLandmarks;
 	}
 
 	public synchronized ThinPlateR2LogRSplineKernelTransform deepCopy()
