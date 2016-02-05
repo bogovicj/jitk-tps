@@ -32,7 +32,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	private static final long serialVersionUID = -972934724062617822L;
 
-	protected int ndims;
+	protected final int ndims;
 
 	/* bounding box */
 	protected double[] newBoxMin;
@@ -75,57 +75,31 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 
 	protected int nLandmarksActive;
 
-	protected double[][] sourceLandmarks;
+	protected final double[][] sourceLandmarks;
 
-	protected double[][] targetLandmarks;
+	protected final double[][] targetLandmarks;
 
 	protected double[] weights; // TODO: make the weights do something :-P
-
-	protected double[][] displacement; // TODO: do we need this? yMatrix seems
-										// to hold the same values
-
-	// parameters relating
-	protected int initialContainerSize = 100;
-
-	protected double increaseRaio = 0.25;
-
-	protected int containerSize;
 
 	protected static final double EPS = 1e-8;
 
 	protected static Logger logger = LogManager
 			.getLogger( ThinPlateR2LogRSplineKernelTransform.class.getName() );
 
-	// TODO: Many of these methods could be optimized by performing them without
-	// explicit construction / multiplication of the matrices.
-	public ThinPlateR2LogRSplineKernelTransform()
-	{}
-
 	/*
-	 * Constructor
+	 * Constructs an identity thin plate spline transform
 	 */
 	public ThinPlateR2LogRSplineKernelTransform( final int ndims )
 	{
-		// logger.info("initializing");
 		this.ndims = ndims;
-
 		gMatrix = new DenseMatrix64F( ndims, ndims );
+		sourceLandmarks = null;
+		targetLandmarks = null;
 
-		/*
-		 * identity matrix for convenience in building matrix during solving.
-		 */
-		I = new DenseMatrix64F( ndims, ndims );
-		CommonOps.setIdentity( I );
+		initGIMtxs();
 
 		nLandmarks = 0;
 		nLandmarksActive = 0;
-		sourceLandmarks = new double[ ndims ][ initialContainerSize ];
-		targetLandmarks = new double[ ndims ][ initialContainerSize ];
-		displacement = new double[ initialContainerSize ][ ndims ];
-		isPairActive = new boolean[ initialContainerSize ];
-		Arrays.fill( isPairActive, true );
-
-		containerSize = initialContainerSize;
 	}
 
 	/*
@@ -134,29 +108,59 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	public ThinPlateR2LogRSplineKernelTransform( final int ndims,
 			final double[][] srcPts, final double[][] tgtPts )
 	{
-		this( ndims );
-		setLandmarks( srcPts, tgtPts );
+		this.ndims = ndims;
+		initGIMtxs();
+		this.sourceLandmarks = srcPts;
+		this.targetLandmarks = tgtPts;
+
+		if ( sourceLandmarks != null && sourceLandmarks.length > 0 )
+			nLandmarks = srcPts[ 0 ].length;
+		else
+			nLandmarks = 0;
+
+		nLandmarksActive = nLandmarks;
+		isPairActive = new boolean[ nLandmarks ];
+		Arrays.fill( isPairActive, true );
 	}
 
 	/*
 	 * Constructor with point matches
 	 */
-	public ThinPlateR2LogRSplineKernelTransform( final int ndims,
+	public ThinPlateR2LogRSplineKernelTransform( final int ndims, 
 			final float[][] srcPts, final float[][] tgtPts )
 	{
-		this( ndims );
-		setLandmarks( srcPts, tgtPts );
+		this.ndims = ndims;
+		initGIMtxs();
+
+		sourceLandmarks = new double[ ndims ][ nLandmarks ];
+		targetLandmarks = new double[ ndims ][ nLandmarks ];
+
+		if ( sourceLandmarks != null && sourceLandmarks.length > 0 )
+			nLandmarks = srcPts[ 0 ].length;
+		else
+			nLandmarks = 0;
+
+		for ( int i = 0; i < nLandmarks; ++i )
+		{
+			for ( int d = 0; d < ndims; ++d )
+			{
+				sourceLandmarks[ d ][ i ] = srcPts[ d ][ i ];
+				targetLandmarks[ d ][ i ] = tgtPts[ d ][ i ];
+			}
+		}
+
+		this.nLandmarksActive = nLandmarks;
+		isPairActive = new boolean[ nLandmarks ];
+		Arrays.fill( isPairActive, true );
 	}
 
 	/*
 	 * Constructor with weighted point matches
 	 */
 	public ThinPlateR2LogRSplineKernelTransform( final int ndims,
-			final double[][] srcPts, final double[][] tgtPts,
-			final double[] weights )
+			final double[][] srcPts, final double[][] tgtPts, final double[] weights )
 	{
-		this( ndims );
-		setLandmarks( srcPts, tgtPts );
+		this( ndims, srcPts, tgtPts );
 		setWeights( weights );
 	}
 
@@ -168,24 +172,32 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			final double[][] aMatrix, final double[] bVector,
 			final double[] dMatrixData )
 	{
-
 		ndims = srcPts.length;
-		nLandmarks = srcPts[ 0 ].length;
-		nLandmarksActive = this.nLandmarks;
 
-		gMatrix = new DenseMatrix64F( ndims, ndims );
+		if ( srcPts != null && srcPts.length > 0 )
+			nLandmarks = srcPts[ 0 ].length;
+		else
+			nLandmarks = 0;
 
 		this.sourceLandmarks = srcPts;
+		this.targetLandmarks = null;
 		this.aMatrix = aMatrix;
 		this.bVector = bVector;
 
 		dMatrix = new DenseMatrix64F( ndims, nLandmarks );
 		dMatrix.setData( dMatrixData );
 
+		nLandmarksActive = this.nLandmarks;
 		isPairActive = new boolean[ nLandmarks ];
 		Arrays.fill( isPairActive, true );
+	}
 
-		containerSize = nLandmarks;
+	protected void initGIMtxs()
+	{
+		I = new DenseMatrix64F( ndims, ndims );
+		CommonOps.setIdentity( I );
+
+		gMatrix = new DenseMatrix64F( ndims, ndims );
 	}
 
 	public synchronized ThinPlateR2LogRSplineKernelTransform deepCopy()
@@ -257,91 +269,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return dMatrix.getData();
 	}
 
-	/*
-	 * Sets the source and target landmarks for this KernelTransform object
-	 *
-	 * @param sourcePts the collection of source points
-	 *
-	 * @param targetPts the collection of target/destination points
-	 */
-	public synchronized void setLandmarks( final double[][] srcPts, final double[][] tgtPts )
-			throws IllegalArgumentException
-	{
-
-		nLandmarks = srcPts[ 0 ].length;
-		nLandmarksActive = nLandmarks;
-
-		displacement = new double[ 2 * nLandmarks ][ ndims ];
-		isPairActive = new boolean[ 2 * nLandmarks ];
-		Arrays.fill( isPairActive, false );
-
-		containerSize = nLandmarks;
-
-		assert srcPts.length == ndims && tgtPts.length == ndims: "Source and target landmark lists must have "
-				+ ndims + " spatial dimentions.";
-		assert srcPts[ 0 ].length == tgtPts[ 0 ].length: "Source and target landmark lists must have"
-				+ "the same number of points.";
-
-		this.sourceLandmarks = srcPts;
-		this.targetLandmarks = tgtPts;
-
-		for ( int i = 0; i < nLandmarks; ++i )
-		{
-			isPairActive[ i ] = true;
-			for ( int d = 0; d < ndims; ++d )
-			{
-				displacement[ i ][ d ] = targetLandmarks[ d ][ i ] - sourceLandmarks[ d ][ i ];
-			}
-		}
-
-		isPairActive = new boolean[ nLandmarks ];
-		Arrays.fill( isPairActive, true );
-
-		computeD();
-	}
-
-	/*
-	 * Sets the source and target landmarks for this KernelTransform object
-	 *
-	 * @param sourcePts the collection of source points
-	 *
-	 * @param targetPts the collection of target/destination points
-	 */
-	public synchronized void setLandmarks( final float[][] srcPts, final float[][] tgtPts )
-			throws IllegalArgumentException
-	{
-
-		assert srcPts.length == ndims && tgtPts.length == ndims: "Source and target landmark lists must have "
-				+ ndims + " spatial dimentions.";
-		assert srcPts[ 0 ].length == tgtPts[ 0 ].length: "Source and target landmark lists must have"
-				+ "the same number of points.";
-
-		nLandmarks = srcPts[ 0 ].length;
-		nLandmarksActive = nLandmarks;
-
-		if ( nLandmarks + 1 > containerSize )
-			expandLandmarkContainers( nLandmarks );
-
-		sourceLandmarks = new double[ ndims ][ nLandmarks ];
-		targetLandmarks = new double[ ndims ][ nLandmarks ];
-		displacement = new double[ nLandmarks ][ ndims ];
-		containerSize = nLandmarks;
-
-		for ( int i = 0; i < nLandmarks; ++i )
-		{
-			for ( int d = 0; d < ndims; ++d )
-			{
-				sourceLandmarks[ d ][ i ] = srcPts[ d ][ i ];
-				targetLandmarks[ d ][ i ] = tgtPts[ d ][ i ];
-				displacement[ i ][ d ] = targetLandmarks[ d ][ i ] - sourceLandmarks[ d ][ i ];
-			}
-		}
-
-		isPairActive = new boolean[ nLandmarks ];
-		Arrays.fill( isPairActive, true );
-
-	}
-
 	public boolean validateTransformPoints()
 	{
 		final double[] validtmp = new double[ ndims ];
@@ -395,38 +322,12 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return isPairActive[ i ];
 	}
 
-	public synchronized void removePoint( final int i )
-	{
-		if ( isPairActive[ i ] )
-			nLandmarksActive--;
-
-		int addme = 0;
-		for ( int j = 0; j < nLandmarks; j++ )
-		{
-			if ( j == i )
-				addme++;
-
-			if ( j + addme < containerSize )
-			{
-				for ( int d = 0; d < ndims; d++ )
-				{
-					sourceLandmarks[ d ][ j ] = sourceLandmarks[ d ][ j + addme ];
-					targetLandmarks[ d ][ j ] = targetLandmarks[ d ][ j + addme ];
-					displacement[ j ][ d ] = targetLandmarks[ d ][ j ] - sourceLandmarks[ d ][ j ];
-					isPairActive[ j ] = isPairActive[ j + addme ];
-				}
-			}
-		}
-		nLandmarks--;
-
-	}
-
 	public synchronized void updateSourceLandmark( final int i, final double[] newSource )
 	{
 		for ( int d = 0; d < ndims; d++ )
 		{
 			sourceLandmarks[ d ][ i ] = newSource[ d ];
-			displacement[ i ][ d ] = targetLandmarks[ d ][ i ] - sourceLandmarks[ d ][ i ];
+//			displacement[ i ][ d ] = targetLandmarks[ d ][ i ] - sourceLandmarks[ d ][ i ];
 		}
 	}
 
@@ -435,7 +336,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		for ( int d = 0; d < ndims; d++ )
 		{
 			targetLandmarks[ d ][ i ] = newTarget[ d ];
-			displacement[ i ][ d ] = targetLandmarks[ d ][ i ] - sourceLandmarks[ d ][ i ];
+//			displacement[ i ][ d ] = targetLandmarks[ d ][ i ] - sourceLandmarks[ d ][ i ];
 		}
 	}
 
@@ -444,7 +345,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		for ( int d = 0; d < ndims; d++ )
 		{
 			sourceLandmarks[ d ][ i ] = newSource[ d ];
-			displacement[ i ][ d ] = targetLandmarks[ d ][ i ] - sourceLandmarks[ d ][ i ];
+//			displacement[ i ][ d ] = targetLandmarks[ d ][ i ] - sourceLandmarks[ d ][ i ];
 		}
 	}
 
@@ -453,74 +354,8 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		for ( int d = 0; d < ndims; d++ )
 		{
 			targetLandmarks[ d ][ i ] = newTarget[ d ];
-			displacement[ i ][ d ] = targetLandmarks[ d ][ i ] - sourceLandmarks[ d ][ i ];
+//			displacement[ i ][ d ] = targetLandmarks[ d ][ i ] - sourceLandmarks[ d ][ i ];
 		}
-	}
-
-	public synchronized void addMatch( final float[] source, final float[] target )
-	{
-		if ( nLandmarks + 1 >= containerSize )
-		{
-			expandLandmarkContainers();
-		}
-		for ( int d = 0; d < ndims; d++ )
-		{
-			sourceLandmarks[ d ][ nLandmarks ] = source[ d ];
-			targetLandmarks[ d ][ nLandmarks ] = target[ d ];
-			displacement[ nLandmarks ][ d ] = targetLandmarks[ d ][ nLandmarks ] - sourceLandmarks[ d ][ nLandmarks ];
-		}
-		nLandmarks++;
-		nLandmarksActive++;
-	}
-
-	public synchronized void addMatch( final double[] source, final double[] target )
-	{
-		if ( nLandmarks + 1 >= containerSize )
-		{
-			expandLandmarkContainers();
-		}
-		for ( int d = 0; d < ndims; d++ )
-		{
-			sourceLandmarks[ d ][ nLandmarks ] = source[ d ];
-			targetLandmarks[ d ][ nLandmarks ] = target[ d ];
-			displacement[ nLandmarks ][ d ] = targetLandmarks[ d ][ nLandmarks ] - sourceLandmarks[ d ][ nLandmarks ];
-		}
-		nLandmarks++;
-		nLandmarksActive++;
-	}
-
-	protected synchronized void expandLandmarkContainers()
-	{
-		final int newSize = containerSize
-				+ ( int ) Math.round( increaseRaio * containerSize );
-		expandLandmarkContainers( newSize );
-	}
-
-	protected synchronized void expandLandmarkContainers( final int newSize )
-	{
-		logger.debug( "increasing container size from " + containerSize +
-				" to " + newSize );
-
-		final double[][] NEWsourceLandmarks = new double[ ndims ][ newSize ];
-		final double[][] NEWtargetLandmarks = new double[ ndims ][ newSize ];
-		final double[][] NEWdisplacement = new double[ newSize ][ ndims ];
-		final boolean[] NEWisPairActive = new boolean[ newSize ];
-		Arrays.fill( NEWisPairActive, true );
-
-		for ( int d = 0; d < ndims; d++ )
-			for ( int i = 0; i < nLandmarks; i++ )
-			{
-				NEWsourceLandmarks[ d ][ i ] = sourceLandmarks[ d ][ i ];
-				NEWtargetLandmarks[ d ][ i ] = targetLandmarks[ d ][ i ];
-				NEWdisplacement[ i ][ d ] = NEWtargetLandmarks[ d ][ i ] - NEWsourceLandmarks[ d ][ i ];
-				NEWisPairActive[ i ] = isPairActive[ i ];
-			}
-
-		containerSize = newSize;
-		sourceLandmarks = NEWsourceLandmarks;
-		targetLandmarks = NEWtargetLandmarks;
-		displacement = NEWdisplacement;
-		isPairActive = NEWisPairActive;
 	}
 
 	/**
@@ -586,15 +421,15 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 		return gMatrix;
 	}
 
-	protected void computeD()
-	{
-		displacement = new double[ nLandmarks ][ ndims ];
-		for ( int d = 0; d < ndims; d++ )
-			for ( int i = 0; i < nLandmarks; i++ )
-			{
-				displacement[ i ][ d ] = targetLandmarks[ d ][ i ] - sourceLandmarks[ d ][ i ];
-			}
-	}
+//	protected void computeD()
+//	{
+//		displacement = new double[ nLandmarks ][ ndims ];
+//		for ( int d = 0; d < ndims; d++ )
+//			for ( int i = 0; i < nLandmarks; i++ )
+//			{
+//				displacement[ i ][ d ] = targetLandmarks[ d ][ i ] - sourceLandmarks[ d ][ i ];
+//			}
+//	}
 
 	protected double normSqrd( final double[] v )
 	{
@@ -758,7 +593,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	{
 		CommonOps.fill( yMatrix, 0 );
 
-//		for (int i = 0; i < nLandmarks; i++) {
+		// for (int i = 0; i < nLandmarks; i++) {
 		int i = 0;
 		int gi = 0;
 		while ( i < nLandmarks )
@@ -770,14 +605,15 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 			}
 			for ( int j = 0; j < ndims; j++ )
 			{
-				yMatrix.set( gi * ndims + j, 0, displacement[ i ][ j ] );
+				yMatrix.set( gi * ndims + j, 0,
+						(targetLandmarks[ j ][ i ] - sourceLandmarks[ j ][ i ]) );
 			}
 			i++;
 			gi++;
 		}
 		if ( computeAffine )
 		{
-			for ( i = 0; i < ndims * ( ndims + 1 ); i++ )
+			for ( i = 0; i < ndims * (ndims + 1); i++ )
 			{
 				yMatrix.set( nLandmarksActive * ndims + i, 0, 0 );
 			}
@@ -1040,13 +876,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements
 	 */
 	public void apply( final double[] pt, final double[] result, final boolean debug )
 	{
-		if ( debug )
-		{
-			System.out.println( "nLandmarks " + nLandmarks );
-			System.out.println( "nLandmarksActive " + nLandmarksActive );
-			System.out.println( "dMatrix " + dMatrix.numRows + " " + dMatrix.numCols );
-			System.out.println( "isPairActive " + XfmUtils.printArray( isPairActive ) );
-		}
 
 		computeDeformationContribution( pt, result );
 
