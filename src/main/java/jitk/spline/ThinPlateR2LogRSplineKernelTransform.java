@@ -740,6 +740,13 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 */
 	public void apply( final double[] pt, final double[] result, final boolean debug )
 	{
+		if( dMatrix == null )
+		{
+			for ( int j = 0; j < ndims; j++ )
+				result[ j ] = pt[ j ];
+
+			return;
+		}
 
 		computeDeformationContribution( pt, result );
 
