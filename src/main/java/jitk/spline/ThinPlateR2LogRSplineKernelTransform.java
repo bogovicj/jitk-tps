@@ -114,17 +114,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 		computeW( buildDisplacements( tgtPts ) );
 	}
 
-	private ThinPlateR2LogRSplineKernelTransform( final int ndims, final double[][] srcPts )
-	{
-		this.ndims = ndims;
-		this.sourceLandmarks = srcPts;
-
-		if ( sourceLandmarks != null && sourceLandmarks.length > 0 )
-			nLandmarks = srcPts[ 0 ].length;
-		else
-			nLandmarks = 0;
-	}
-
 	/*
 	 * Constructor with weighted point matches
 	 */
