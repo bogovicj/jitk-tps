@@ -160,30 +160,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 		dMatrix.setData( dMatrixData );
 	}
 
-	public synchronized ThinPlateR2LogRSplineKernelTransform deepCopy()
-	{
-		// TODO may need to synchronize this ?
-		final ThinPlateR2LogRSplineKernelTransform tps = new
-				ThinPlateR2LogRSplineKernelTransform( ndims,
-						XfmUtils.deepCopy( sourceLandmarks ) );
-
-		tps.aMatrix = XfmUtils.deepCopy( aMatrix );
-		tps.bVector = Arrays.copyOf( this.bVector, this.bVector.length );
-		tps.dMatrix = this.dMatrix.copy();
-		tps.weights = weights;
-
-		return tps;
-	}
-
-	public ThinPlateR2LogRSplineKernelTransform deepCopy2()
-	{
-		final ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform(
-				XfmUtils.deepCopy( sourceLandmarks ), XfmUtils.deepCopy( aMatrix ),
-				bVector.clone(), dMatrix.data.clone() );
-		tps.weights = weights;
-		return tps;
-	}
-
 	public int getNumLandmarks()
 	{
 		return this.nLandmarks;
