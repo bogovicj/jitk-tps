@@ -10,8 +10,6 @@ import org.ejml.factory.LinearSolverFactory;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.NormOps;
 
-import com.sun.tools.javac.util.Pair;
-
 import mpicbg.models.CoordinateTransform;
 
 /**
@@ -798,7 +796,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * @return a pair containing the closest landmark point and its squared
 	 *         distance to that landmark
 	 */
-	public Pair< Integer, Double > closestTargetLandmarkAndDistance( final double[] target )
+	public IndexDistancePair closestTargetLandmarkAndDistance( final double[] target )
 	{
 		int idx = -1;
 		double distSqr = Double.MAX_VALUE;
@@ -818,16 +816,29 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 			}
 		}
 
-		return new Pair< Integer, Double >( idx, distSqr );
+		return new IndexDistancePair( idx, distSqr );
+	}
+
+	private static class IndexDistancePair
+	{
+		final int index;
+		final double distance;
+
+		public IndexDistancePair( final int i, final double d )
+		{
+			this.index = i;
+			this.distance = d;
+		}
+
 	}
 
 	public double[] initialGuessAtInverse( final double[] target, final double tolerance )
 	{
-		final Pair< Integer, Double > lmAndDist = closestTargetLandmarkAndDistance( target );
-		logger.trace( "nearest landmark error: " + lmAndDist.snd );
+		final IndexDistancePair lmAndDist = closestTargetLandmarkAndDistance( target );
+		logger.trace( "nearest landmark error: " + lmAndDist.distance );
 
 		double[] initialGuess;
-		final int idx = lmAndDist.fst;
+		final int idx = lmAndDist.index;
 		logger.trace( "initial guess by landmark: " + idx );
 
 		initialGuess = new double[ ndims ];
