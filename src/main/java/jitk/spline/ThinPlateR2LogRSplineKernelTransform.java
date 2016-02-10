@@ -52,7 +52,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	protected static final double EPS = 1e-8;
 
 	protected static Logger logger = LogManager.getLogger( 
-			ThinPlateR2LogRSplineKernelTransformFinal.class.getName() );
+			ThinPlateR2LogRSplineKernelTransform.class.getName() );
 
 	/*
 	 * Constructs an identity thin plate spline transform
