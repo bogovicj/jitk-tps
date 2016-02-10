@@ -208,34 +208,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 		this.computeAffine = estimateAffine;
 	}
 
-	private void initMatrices(DenseMatrix64F kMatrix, DenseMatrix64F lMatrix, DenseMatrix64F pMatrix, DenseMatrix64F wMatrix, DenseMatrix64F yMatrix)
-	{
-		dMatrix = new DenseMatrix64F( ndims, nLandmarks );
-		kMatrix = new DenseMatrix64F( ndims * nLandmarks, ndims * nLandmarks );
-
-		if ( computeAffine )
-		{
-			aMatrix = new double[ ndims ][ ndims ];
-			bVector = new double[ ndims ];
-
-			pMatrix = new DenseMatrix64F( ( ndims * nLandmarks ),
-					( ndims * ( ndims + 1 ) ) );
-			lMatrix = new DenseMatrix64F( ndims * ( nLandmarks + ndims + 1 ),
-					ndims * ( nLandmarks + ndims + 1 ) );
-			wMatrix = new DenseMatrix64F( ( ndims * nLandmarks ) + ndims * ( ndims + 1 ), 1 );
-			yMatrix = new DenseMatrix64F( ndims * ( nLandmarks + ndims + 1 ), 1 );
-		}
-		else
-		{
-			// we dont need the P matrix and L can point
-			// directly to K rather than itself being initialized
-
-			// the W matrix won't hold the affine component
-			wMatrix = new DenseMatrix64F( ndims * nLandmarks, 1 );
-			yMatrix = new DenseMatrix64F( ndims * nLandmarks, 1 );
-		}
-	}
-
 	protected DenseMatrix64F computeReflexiveG()
 	{
 		DenseMatrix64F gMatrix = new DenseMatrix64F( ndims, ndims );
