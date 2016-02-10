@@ -70,6 +70,12 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 		this( ndims, srcPts, tgtPts, true );
 	}
 
+	public ThinPlateR2LogRSplineKernelTransform( final int ndims,
+			final float[][] srcPts, final float[][] tgtPts )
+	{
+		this( ndims, srcPts, tgtPts, true );
+	}
+
 	/*
 	 * Constructor with point matches
 	 */
@@ -92,10 +98,10 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * Constructor with point matches
 	 */
 	public ThinPlateR2LogRSplineKernelTransform( final int ndims, final float[][] srcPts,
-			final float[][] tgtPts )
+			final float[][] tgtPts, boolean computeAffine )
 	{
 		this.ndims = ndims;
-
+		this.computeAffine = computeAffine;
 		sourceLandmarks = new double[ ndims ][ nLandmarks ];
 
 		if ( sourceLandmarks != null && sourceLandmarks.length > 0 )
