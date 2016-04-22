@@ -228,4 +228,27 @@ public class XfmUtils {
 		}
 		return out;
 	}
+
+	public static final String printArray(long[][] in) {
+		if (in == null)
+			return "null";
+		String out = "";
+		for (int i = 0; i < in.length; i++) {
+			for (int j = 0; j < in[0].length; j++) {
+				out += in[i][j] + " ";
+			}
+			out += "\n";
+		}
+		return out;
+	}
+
+	public static final String printArray(long[] in) {
+		if (in == null)
+			return "null";
+		String out = "";
+		for (int i = 0; i < in.length; i++) {
+			out += in[i] + " ";
+		}
+		return out;
+	}
 }
