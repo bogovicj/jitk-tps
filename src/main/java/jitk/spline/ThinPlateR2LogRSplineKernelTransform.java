@@ -755,11 +755,10 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	}
 
 	/**
-	 * Determine if a point whose inverse we want is close to a landmark. If so,
-	 * return the index of that landmark, and use that to help.
+	 * Returns the index of the target landmark closest to the input point as well
+	 * as the distance to that landmark. 
 	 *
-	 * @param pt
-	 * @param tolerance
+	 * @param pt the point
 	 * @return a pair containing the closest landmark point and its squared
 	 *         distance to that landmark
 	 */
@@ -799,7 +798,15 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 
 	}
 
-	public double[] initialGuessAtInverse( final double[] target, final double tolerance )
+	/**
+	 * Approximates the inverse of the input target point by taking the best of several
+	 * available approximation methods.
+	 * 
+	 * @param target the target point
+	 * @param tolerance the desired precision - must be greater than zero
+	 * @return the approximate inverse point
+	 */
+	public double[] initialGuessAtInverse( final double[] target  )
 	{
 		final IndexDistancePair lmAndDist = closestTargetLandmarkAndDistance( target );
 		logger.trace( "nearest landmark error: " + lmAndDist.distance );
@@ -843,6 +850,13 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 		return initialGuess;
 	}
 
+	/**
+	 * Quickly approximates the inverse of the input target point, 
+	 * using the affine portion of the transform only.
+	 * 
+	 * @param target a point in the target space
+	 * @return approximate inverse 
+	 */
 	public double[] inverseGuessAffineInv( final double[] target )
 	{
 		// Here, mtx is A + I
@@ -878,7 +892,47 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 		return resOut;
 	}
 
-	public int inverseTol( final double[] pt, final double[] guess, final double tolerance, final int maxIters )
+	/**
+	 * Computes the inverse of this transformation.
+	 * 
+	 * @param target the target point
+	 * @param result array in which to store the result
+	 * @param tolerance the desired precision - must be greater than zero
+	 * @param maxIters maximum number of iterations
+	 * @return true if the result is within the specified tolerance, false otherwise
+	 */
+	public boolean inverse( final double[] target, final double[] result, final double tolerance, final int maxIters )
+	{
+		assert tolerance > 0.0;
+
+		double[] guess = initialGuessAtInverse( target );
+		double error = inverseTol( target, guess, tolerance, maxIters );
+
+		for ( int d = 0; d < ndims; d++ )
+			result[ d ] = guess[ d ];
+
+		if( error < tolerance )
+			return true;
+		else
+			return false;
+	}
+
+	/**
+	 * Computes the inverse of this transformation.  Performs a maximum of 100,000 iterations, 
+	 * returning whatever the estimate is at that point.  
+	 * 
+	 * @param target the target point
+	 * @param tolerance the desired precision - must be greater than zero
+	 * @return the result of applying the inverse transform to the target point
+	 */
+	public double[] inverse( final double[] target, final double tolerance )
+	{
+		double[] out = new double[ ndims ];
+		inverse( target, out, tolerance, 100000 );
+		return out;
+	}
+
+	public double inverseTol( final double[] target, final double[] guess, final double tolerance, final int maxIters )
 	{
 		// TODO - have a flag in the apply method to also return the derivative
 		// if requested
@@ -894,7 +948,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 		mtx = jacobian( guess );
 
 		final TransformInverseGradientDescent inv = new TransformInverseGradientDescent( ndims, this );
-		inv.setTarget( pt );
+		inv.setTarget( target );
 		inv.setEstimate( guess );
 		inv.setEstimateXfm( guessXfm );
 		inv.setJacobian( mtx );
@@ -939,7 +993,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 
 			k++;
 		}
-		return k;
+		return error;
 	}
 
 	/**

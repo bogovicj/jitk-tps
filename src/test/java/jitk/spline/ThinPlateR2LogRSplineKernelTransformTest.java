@@ -103,10 +103,10 @@ public class ThinPlateR2LogRSplineKernelTransformTest
 		final ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform(
 				ndims, srcPts, tgtPts, false );
 
-		int finalIters = tps.inverseTol( target, guess, 0.5, 2000 );
+		double finalError= tps.inverseTol( target, guess, 0.5, 2000 );
 
 		double[] guessXfm = tps.apply( guess );
-		logger.debug( "iterations    : " + finalIters );
+		logger.debug( "final error   : " + finalError );
 		logger.debug( "final guess   : " + XfmUtils.printArray( guess ) );
 		logger.debug( "final guessXfm: " + XfmUtils.printArray( guessXfm ) );
 
