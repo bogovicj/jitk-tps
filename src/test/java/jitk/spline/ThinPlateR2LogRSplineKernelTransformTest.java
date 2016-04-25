@@ -275,8 +275,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest
 
 			inv.setEstimateXfm( guessXfm );
 			error = inv.getError();
-
-			System.out.println( "error: " + error );
+//			System.out.println( "error: " + error );
 
 			k++;
 		}
@@ -405,13 +404,13 @@ public class ThinPlateR2LogRSplineKernelTransformTest
 
 		final double[][] pts = new double[][]
 		{
-			{ -1, 0, 1 }, // x
-			{ -1, 0, 1 } // y
+			{ -1, 0, 0 }, // x
+			{ -1, 0, 1 }  // y
 		};
 
 		final int nL = pts[ 0 ].length;
 
-		final double[][] tpts = XfmUtils.genPtListScale( pts, new double[]{ 2, 3 } );
+		final double[][] tpts = XfmUtils.genPtListScale( pts, new double[]{ 1, 1 } );
 
 		final ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform(
 				ndims, pts, tpts );
