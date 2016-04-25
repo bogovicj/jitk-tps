@@ -820,7 +820,11 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 			initialGuess[ i ] = sourceLandmarks[ i ][ idx ];
 
 		logger.trace( "initial guess by affine " );
-		final double[] initialGuessAffine = inverseGuessAffineInv( target );
+		final double[] initialGuessAffine;
+		if( this.aMatrix != null )
+			initialGuessAffine = inverseGuessAffineInv( target );
+		else
+			initialGuessAffine = target;
 
 		final double[] resL = apply( initialGuess );
 		final double[] resA = apply( initialGuessAffine );
