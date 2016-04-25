@@ -87,6 +87,28 @@ public class ThinPlateR2LogRSplineKernelTransformTest
 	}
 
 	@Test
+	public void testTPSInverseConvenience()
+	{
+		final double[] target = new double[]{ 0.5, 0.5 };
+		final double tolerance = 0.01;
+		final int maxIters = 9999;
+
+		genPtListSimple2d();
+		final ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform(
+				ndims, srcPts, tgtPts, true );
+
+		double[] invResult = new double[ 2 ];
+
+		double finalError = tps.inverse( target, invResult, tolerance, maxIters );
+
+		double[] invResultXfm = tps.apply( invResult );
+		logger.debug( "final error   : " + finalError );
+		logger.debug( "final guess   : " + XfmUtils.printArray( invResult ) );
+		logger.debug( "final guessXfm: " + XfmUtils.printArray( invResultXfm ) );
+
+	}
+
+	@Test
 	public void testTPSInverse2()
 	{
 		double[] target = new double[]{ 0.5, 0.5 };
