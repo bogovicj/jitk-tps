@@ -537,9 +537,8 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 *
 	 * See the documentation for a derivation.
 	 *
-	 * @param p
-	 *            The point at which to evaluate the derivative
-	 * @return
+	 * @param p The point at which to evaluate the derivative
+	 * @return The Jacobian matrix
 	 */
 	public double[][] r2LogrDerivative( final double[] p )
 	{
@@ -758,7 +757,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * Returns the index of the target landmark closest to the input point as well
 	 * as the distance to that landmark. 
 	 *
-	 * @param pt the point
+	 * @param target the point
 	 * @return a pair containing the closest landmark point and its squared
 	 *         distance to that landmark
 	 */
@@ -803,7 +802,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * available approximation methods.
 	 * 
 	 * @param target the target point
-	 * @param tolerance the desired precision - must be greater than zero
 	 * @return the approximate inverse point
 	 */
 	public double[] initialGuessAtInverse( final double[] target  )
