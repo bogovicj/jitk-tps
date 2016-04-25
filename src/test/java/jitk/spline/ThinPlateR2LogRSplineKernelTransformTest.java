@@ -106,6 +106,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest
 		logger.debug( "final guess   : " + XfmUtils.printArray( invResult ) );
 		logger.debug( "final guessXfm: " + XfmUtils.printArray( invResultXfm ) );
 
+		assertTrue( "tolerance met", ( finalError < tolerance  ));
 	}
 
 	@Test
