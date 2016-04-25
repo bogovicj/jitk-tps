@@ -905,7 +905,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * @param maxIters maximum number of iterations
 	 * @return true if the result is within the specified tolerance, false otherwise
 	 */
-	public boolean inverse( final double[] target, final double[] result, final double tolerance, final int maxIters )
+	public double inverse( final double[] target, final double[] result, final double tolerance, final int maxIters )
 	{
 		assert tolerance > 0.0;
 
@@ -915,10 +915,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 		for ( int d = 0; d < ndims; d++ )
 			result[ d ] = guess[ d ];
 
-		if( error < tolerance )
-			return true;
-		else
-			return false;
+		return error;
 	}
 
 	/**
