@@ -1,11 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>sc.fiji</groupId>
+		<artifactId>pom-fiji</artifactId>
+		<version>22.3.0</version>
+	</parent>
+
 	<groupId>jitk</groupId>
 	<artifactId>jitk-tps</artifactId>
 	<version>2.1.1-SNAPSHOT</version>
+
 	<name>JavaITK thin plate spline</name>
 	<description>A java port of the ITK thin plate spline implementation.</description>
+
+	<scm>
+		<url>https://github.com/bogovicj/jitk-tps</url>
+		<connection>scm:git:git://github.com/bogovicj/jitk-tps</connection>
+		<developerConnection>scm:git:git@github.com:bogovicj/jitk-tps</developerConnection>
+		<tag>HEAD</tag>
+	</scm>
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/bogovicj/jitk-tps/issues</url>
+	</issueManagement>
+
+	<repositories>
+		<repository>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
 		<dependency>
 			<groupId>
@@ -33,26 +61,4 @@
 			<artifactId>opencsv</artifactId>
 		</dependency>
 	</dependencies>
-	<scm>
-		<url>https://github.com/bogovicj/jitk-tps</url>
-		<connection>scm:git:git://github.com/bogovicj/jitk-tps</connection>
-		<developerConnection>scm:git:git@github.com:bogovicj/jitk-tps</developerConnection>
-		<tag>HEAD</tag>
-	</scm>
-	<issueManagement>
-		<system>GitHub</system>
-		<url>https://github.com/bogovicj/jitk-tps/issues</url>
-	</issueManagement>
-	<parent>
-		<groupId>sc.fiji</groupId>
-		<artifactId>pom-fiji</artifactId>
-		<version>22.3.0</version>
-	</parent>
-
-	<repositories>
-		<repository>
-			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
-		</repository>
-	</repositories>
 </project>
