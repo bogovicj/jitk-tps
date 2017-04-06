@@ -16,6 +16,44 @@
 	<name>JavaITK thin plate spline</name>
 	<description>A java port of the ITK thin plate spline implementation.</description>
 
+	<developers>
+		<developer>
+			<id>bogovicj</id>
+			<name>John Bogovic</name>
+			<url>http://imagej.net/User:Bogovic</url>
+			<roles>
+				<role>founder</role>
+				<role>lead</role>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>axtimwalde</id>
+			<name>Stephan Saalfeld</name>
+			<url>http://imagej.net/User:Saalfeld</url>
+			<roles>
+				<role>founder</role>
+				<role>lead</role>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>Curtis Rueden</name>
+			<url>http://imagej.net/User:Rueden</url>
+			<properties><id>ctrueden</id></properties>
+		</contributor>
+	</contributors>
+
 	<scm>
 		<url>https://github.com/bogovicj/jitk-tps</url>
 		<connection>scm:git:git://github.com/bogovicj/jitk-tps</connection>
