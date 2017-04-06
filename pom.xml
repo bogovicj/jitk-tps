@@ -4,9 +4,10 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>sc.fiji</groupId>
-		<artifactId>pom-fiji</artifactId>
-		<version>22.3.0</version>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>14.0.0</version>
+		<relativePath />
 	</parent>
 
 	<groupId>jitk</groupId>
@@ -15,6 +16,19 @@
 
 	<name>JavaITK thin plate spline</name>
 	<description>A java port of the ITK thin plate spline implementation.</description>
+	<url>https://github.com/saalfeldlab/jitk-tps</url>
+	<inceptionYear>2014</inceptionYear>
+	<organization>
+		<name>Fiji</name>
+		<url>https://fiji.sc/</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>Apache Software License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
 
 	<developers>
 		<developer>
@@ -54,16 +68,34 @@
 		</contributor>
 	</contributors>
 
+	<mailingLists>
+		<mailingList>
+			<name>ImageJ Forum</name>
+			<archive>http://forum.imagej.net/</archive>
+		</mailingList>
+	</mailingLists>
+
 	<scm>
-		<url>https://github.com/bogovicj/jitk-tps</url>
-		<connection>scm:git:git://github.com/bogovicj/jitk-tps</connection>
-		<developerConnection>scm:git:git@github.com:bogovicj/jitk-tps</developerConnection>
+		<url>https://github.com/saalfeldlab/jitk-tps</url>
+		<connection>scm:git:git://github.com/saalfeldlab/jitk-tps</connection>
+		<developerConnection>scm:git:git@github.com:saalfeldlab/jitk-tps</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 	<issueManagement>
 		<system>GitHub</system>
-		<url>https://github.com/bogovicj/jitk-tps/issues</url>
+		<url>https://github.com/saalfeldlab/jitk-tps/issues</url>
 	</issueManagement>
+	<ciManagement>
+		<system>Travis CI</system>
+		<url>https://travis-ci.org/saalfeldlab/jitk-tps</url>
+	</ciManagement>
+
+	<properties>
+		<package-name>jitk.spline</package-name>
+		<license.licenseName>apache_v2</license.licenseName>
+		<license.copyrightOwners>Howard Hughes Medical Institute.</license.copyrightOwners>
+		<license.projectName>JavaITK thin plate spline.</license.projectName>
+	</properties>
 
 	<repositories>
 		<repository>
