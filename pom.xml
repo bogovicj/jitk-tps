@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>14.0.0</version>
+		<version>15.0.0</version>
 		<relativePath />
 	</parent>
 
@@ -95,6 +95,11 @@
 		<license.licenseName>apache_v2</license.licenseName>
 		<license.copyrightOwners>Howard Hughes Medical Institute.</license.copyrightOwners>
 		<license.projectName>JavaITK thin plate spline.</license.projectName>
+
+		<ejml.version>0.24</ejml.version>
+		<log4j.version>1.2.17</log4j.version>
+		<!-- TEMP: until pom-scijava 16.0.0 is released. -->
+		<opencsv.version>3.9</opencsv.version>
 	</properties>
 
 	<repositories>
@@ -108,12 +113,12 @@
 		<dependency>
 			<groupId>com.googlecode.efficient-java-matrix-library</groupId>
 			<artifactId>ejml</artifactId>
-			<version>0.24</version>
+			<version>${ejml.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
-			<version>1.2.17</version>
+			<version>${log4j.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -125,8 +130,9 @@
 			<artifactId>mpicbg</artifactId>
 			</dependency>
 		<dependency>
-			<groupId>au.com.bytecode</groupId>
+			<groupId>com.opencsv</groupId>
 			<artifactId>opencsv</artifactId>
+			<version>${opencsv.version}</version>
 		</dependency>
 	</dependencies>
 </project>
