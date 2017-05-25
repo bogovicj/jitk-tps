@@ -13,7 +13,7 @@ import org.ejml.ops.NormOps;
 import mpicbg.models.CoordinateTransform;
 
 /**
- * Implements a thin plate spline transform.
+ * Implements an n-dimensional thin plate spline transform.
  * Began as a port of itk's itkKernelTransform.hxx
  * <p>
  * M. H. Davis, a Khotanzad, D. P. Flamig, and S. E. Harms, “A physics-based
