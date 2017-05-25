@@ -120,8 +120,13 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 		computeW( buildDisplacements( tgtPts ) );
 	}
 
-	/*
+	/**
 	 * Constructor with weighted point matches
+	 * 
+	 * @param ndims num dimensions
+	 * @param srcPts source points
+	 * @param tgtPts target points 
+	 * @param weights point weights
 	 */
 	public ThinPlateR2LogRSplineKernelTransform( final int ndims,
 			final double[][] srcPts, final double[][] tgtPts, final double[] weights )
@@ -133,6 +138,11 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	/**
 	 * Constructor with transformation parameters. aMatrix and bVector are
 	 * allowed to be null
+	 * 
+	 * @param srcPts source points
+	 * @param aMatrix A matrix
+	 * @param bVector b vector
+	 * @param dMatrixData D matrix
 	 */
 	public ThinPlateR2LogRSplineKernelTransform( final double[][] srcPts,
 			final double[][] aMatrix, final double[] bVector,
@@ -296,6 +306,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * <p>
 	 * Implements Equation (5) in Davis et al. and calls reorganizeW.
 	 *
+	 * @param yMatrix the y matrix
 	 */
 	protected void computeW( final DenseMatrix64F yMatrix )
 	{
@@ -408,7 +419,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 
 	/**
 	 * Builds the K matrix from landmark points and G matrix.
-	 * @param kMatrix 
+	 * @param kMatrix the k matrix
 	 */
 	protected void computeK(DenseMatrix64F kMatrix)
 	{
@@ -442,7 +453,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * Copies data from the W matrix to the D, A, and b matrices which represent
 	 * the deformable, affine and translational portions of the transformation,
 	 * respectively.
-	 * @param wMatrix  
+	 * @param wMatrix the w matrix
 	 */
 	protected void reorganizeW (DenseMatrix64F wMatrix )
 	{
@@ -588,8 +599,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * The result is stored in a new double array where element [ i ][ j ] gives
 	 * the derivative of variable i with respect to variable j
 	 *
-	 * @param p
-	 *            the point
+	 * @param p the point
 	 * @return the jacobian array
 	 */
 	public double[][] jacobian( final double[] p )
@@ -640,8 +650,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * Transforms the input point according to the affine part of the thin plate
 	 * spline stored by this object.
 	 *
-	 * @param pt
-	 *            the point to be transformed
+	 * @param pt the point to be transformed
 	 * @return the transformed point
 	 */
 	public double[] transformPointAffine( final double[] pt )
@@ -675,8 +684,9 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * Transform a source vector pt into a target vector result. pt and result
 	 * must NOT be the same vector.
 	 * 
-	 * @param pt
-	 * @param result
+	 * @param pt the point
+	 * @param result the result
+	 * @param debug do debug
 	 */
 	public void apply( final double[] pt, final double[] result, final boolean debug )
 	{
@@ -721,8 +731,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * Transforms the input point according to the thin plate spline stored by
 	 * this object.
 	 *
-	 * @param pt
-	 *            the point to be transformed
+	 * @param pt the point to be transformed
 	 * @return the transformed point
 	 */
 	@Override
@@ -738,7 +747,7 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	/**
 	 * Transform pt in place.
 	 *
-	 * @param pt
+	 * @param pt the point
 	 */
 	@Override
 	public void applyInPlace( final double[] pt )
@@ -999,6 +1008,10 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * Computes the displacement between the i^th and j^th source points.
 	 *
 	 * Stores the result in the input array 'res' Does not validate inputs.
+	 * 
+	 * @param i first index
+	 * @param j second index
+	 * @param res result
 	 */
 	protected void srcPtDisplacement( final int i, final int j,
 			final double[] res )
@@ -1014,6 +1027,10 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * point.
 	 *
 	 * Stores the result in the input array 'res'. Does not validate inputs.
+	 * 
+	 * @param i first index
+	 * @param pt the point
+	 * @param res the result
 	 */
 	protected void srcPtDisplacement( final int i, final double[] pt,
 			final double[] res )
@@ -1029,6 +1046,10 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * point.
 	 *
 	 * Stores the result in the input array 'res'. Does not validate inputs.
+	 * 
+	 * @param i first index
+	 * @param pt the point
+	 * @param res the result
 	 */
 	protected void tgtPtDisplacement( final int i, final double[] pt,
 			final double[] res )

@@ -121,8 +121,8 @@ public class XfmUtils {
 	/**
 	 * Copy from src to dest
 	 * 
-	 * @param src
-	 * @param dest
+	 * @param src source
+	 * @param dest destination
 	 */
 	public static void copy(float[] src, double[] dest) {
 		for (int i = 0; i < src.length; i++) {
@@ -133,8 +133,8 @@ public class XfmUtils {
 	/**
 	 * Copy from src to dest
 	 * 
-	 * @param src
-	 * @param dest
+	 * @param src source
+	 * @param dest destination
 	 */
 	public static void copy(double[] src, float[] dest) {
 		for (int i = 0; i < src.length; i++) {

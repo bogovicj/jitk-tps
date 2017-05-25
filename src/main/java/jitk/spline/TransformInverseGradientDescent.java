@@ -180,7 +180,7 @@ public class TransformInverseGradientDescent
 	 * Uses Backtracking Line search to determine a step size.
 	 * 
 	 * @param c the armijoCondition parameter
-	 * @param beta the fraction to multiply the step size at each iteration ( < 1 )
+	 * @param beta the fraction to multiply the step size at each iteration ( less than 1 )
 	 * @param maxtries max number of tries
 	 * @param t0 initial step size
 	 * @return the step size
@@ -210,8 +210,7 @@ public class TransformInverseGradientDescent
 	}
 
 	/**
-	 * Returns true if f( x + \alpha p ) <= f( x )+ \alpha c m where m = ||
-	 * \nabla f ||^2 and f is
+	 * Returns true if the armijo condition is satisfied.
 	 * 
 	 * @param c the c parameter
 	 * @param t the step size
