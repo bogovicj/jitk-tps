@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>15.0.0</version>
+		<version>16.1.0</version>
 		<relativePath />
 	</parent>
 
@@ -98,8 +98,6 @@
 
 		<ejml.version>0.24</ejml.version>
 		<log4j.version>1.2.17</log4j.version>
-		<!-- TEMP: until pom-scijava 16.0.0 is released. -->
-		<opencsv.version>3.9</opencsv.version>
 	</properties>
 
 	<repositories>
@@ -132,7 +130,6 @@
 		<dependency>
 			<groupId>com.opencsv</groupId>
 			<artifactId>opencsv</artifactId>
-			<version>${opencsv.version}</version>
 		</dependency>
 	</dependencies>
 </project>
