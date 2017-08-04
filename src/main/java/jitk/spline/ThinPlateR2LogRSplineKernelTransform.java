@@ -1,5 +1,6 @@
 package jitk.spline;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 import org.apache.log4j.LogManager;
@@ -10,7 +11,6 @@ import org.ejml.factory.LinearSolverFactory;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.NormOps;
 
-import mpicbg.models.CoordinateTransform;
 
 /**
  * Implements an n-dimensional thin plate spline transform.
@@ -24,7 +24,7 @@ import mpicbg.models.CoordinateTransform;
  * @author John Bogovic
  *
  */
-public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
+public class ThinPlateR2LogRSplineKernelTransform implements Serializable
 {
 
 	private static final long serialVersionUID = -972934724062617822L;
@@ -734,7 +734,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 * @param pt the point to be transformed
 	 * @return the transformed point
 	 */
-	@Override
 	public double[] apply( final double[] pt )
 	{
 		final double[] result = new double[ ndims ];
@@ -749,7 +748,6 @@ public class ThinPlateR2LogRSplineKernelTransform implements CoordinateTransform
 	 *
 	 * @param pt the point
 	 */
-	@Override
 	public void applyInPlace( final double[] pt )
 	{
 

@@ -1,7 +1,5 @@
 package jitk.spline;
 
-import mpicbg.models.CoordinateTransform;
-
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.NormOps;
@@ -12,7 +10,7 @@ public class TransformInverseGradientDescent
 {
 	int ndims;
 
-	CoordinateTransform xfm;
+	ThinPlateR2LogRSplineKernelTransform xfm;
 
 	DenseMatrix64F jacobian;
 
@@ -46,7 +44,7 @@ public class TransformInverseGradientDescent
 	protected static Logger logger = LogManager.getLogger(
 			TransformInverseGradientDescent.class.getName() );
 
-	public TransformInverseGradientDescent( int ndims, CoordinateTransform xfm )
+	public TransformInverseGradientDescent( int ndims, ThinPlateR2LogRSplineKernelTransform xfm )
 	{
 		this.ndims = ndims;
 		this.xfm = xfm;

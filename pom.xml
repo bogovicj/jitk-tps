@@ -124,10 +124,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>mpicbg</groupId>
-			<artifactId>mpicbg</artifactId>
-			</dependency>
-		<dependency>
 			<groupId>com.opencsv</groupId>
 			<artifactId>opencsv</artifactId>
 		</dependency>

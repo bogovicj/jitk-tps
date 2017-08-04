@@ -1,6 +1,5 @@
 package jitk.spline;
 
-import mpicbg.models.CoordinateTransform;
 
 /**
  * Class with helper methods for debugging and testing the this thin plate
@@ -59,12 +58,12 @@ public class XfmUtils {
 		return pts;
 	}
 	
-	public static double maxError( double[][] sourcePoints, double[][] targetPoints, CoordinateTransform xfm )
+	public static double maxError( double[][] sourcePoints, double[][] targetPoints, ThinPlateR2LogRSplineKernelTransform xfm )
 	{
 		return maxError( sourcePoints, targetPoints, xfm, false );
 	}
 	
-	public static double maxError( double[][] sourcePoints, double[][] targetPoints, CoordinateTransform xfm, boolean debug )
+	public static double maxError( double[][] sourcePoints, double[][] targetPoints, ThinPlateR2LogRSplineKernelTransform xfm, boolean debug )
 	{
 		double maxError = 0.0;
 		
