@@ -121,7 +121,7 @@ public class ThinPlateR2LogRSplineKernelTransformTest
 		final ThinPlateR2LogRSplineKernelTransform tps = new ThinPlateR2LogRSplineKernelTransform(
 				ndims, srcPts, tgtPts, false );
 
-		double finalError= tps.inverseTol( target, guess, 0.5, 2000 );
+		double finalError= tps.inverseTol( target, guess, 0.5, 1000 );
 
 		double[] guessXfm = tps.apply( guess );
 		logger.debug( "final error   : " + finalError );
@@ -131,32 +131,33 @@ public class ThinPlateR2LogRSplineKernelTransformTest
 		assertEquals( "within tolerance 0.5 x", 0.5, guessXfm[ 0 ], 0.5 );
 		assertEquals( "within tolerance 0.5 y", 0.5, guessXfm[ 1 ], 0.5 );
 
-		// tps.inverseTol( target, guess, 0.1, 200 );
-		// logger.debug( "final guess: " + XfmUtils.printArray( guess ) );
-		//
-		// assertEquals( "within tolerance 0.1 x", 0.5, guess[ 0 ], 0.1 );
-		// assertEquals( "within tolerance 0.1 y", 0.5, guess[ 1 ], 0.1 );
-		//
-		// // try for a few different initial guesses
-		// for ( int xm = -1; xm <= 1; xm++ )
-		// for ( int ym = -1; ym <= 1; ym++ )
-		// {
-		// System.arraycopy( guessBase, 0, guess, 0, ndims );
-		// guess[ 0 ] *= xm;
-		// guess[ 1 ] *= ym;
-		//
-		// tps.inverseTol( target, guess, 0.5, 200 );
-		// logger.debug( "final guess: " + XfmUtils.printArray( guess ) );
-		//
-		// assertEquals( "within tolerance 0.5 x", 0.5, guess[ 0 ], 0.5 );
-		// assertEquals( "within tolerance 0.5 y", 0.5, guess[ 1 ], 0.5 );
-		//
-		// tps.inverseTol( target, guess, 0.1, 2000 );
-		// logger.debug( "final guess: " + XfmUtils.printArray( guess ) );
-		//
-		// assertEquals( "within tolerance 0.1 x", 0.5, guess[ 0 ], 0.1 );
-		// assertEquals( "within tolerance 0.1 y", 0.5, guess[ 1 ], 0.1 );
-		// }
+		tps.inverseTol( target, guess, 0.25, 2000 );
+		logger.debug( "final guess: " + XfmUtils.printArray( guess ) );
+
+		assertEquals( "within tolerance 0.25 x", 0.5, guess[ 0 ], 0.25 );
+		assertEquals( "within tolerance 0.25 y", 0.5, guess[ 1 ], 0.25 );
+
+		// try for a few different initial guesses
+		double[] guessBase = new double[] { 0.0, 0.0 };
+		for (double xm = -2.5; xm <= 2.5; xm += 0.5)
+			for (double ym = -2.5; ym <= 2.5; ym += 0.5) 
+			{
+				System.arraycopy(guessBase, 0, guess, 0, ndims);
+				guess[0] *= xm;
+				guess[1] *= ym;
+
+				tps.inverseTol(target, guess, 0.5, 2000);
+				logger.debug("final guess: " + XfmUtils.printArray(guess));
+
+				assertEquals("within tolerance 0.5 x", 0.5, guess[0], 0.5);
+				assertEquals("within tolerance 0.5 y", 0.5, guess[1], 0.5);
+
+				tps.inverseTol(target, guess, 0.25, 2000);
+				logger.debug("final guess: " + XfmUtils.printArray(guess));
+
+				assertEquals("within tolerance 0.25 x", 0.5, guess[0], 0.25);
+				assertEquals("within tolerance 0.25 y", 0.5, guess[1], 0.25);
+			}
 	}
 
 	@Test
