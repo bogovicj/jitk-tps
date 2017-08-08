@@ -3,9 +3,6 @@ package jitk.spline;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.List;
 import java.util.Random;
 
 import org.apache.log4j.LogManager;
@@ -13,8 +10,6 @@ import org.apache.log4j.Logger;
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.junit.Test;
-
-import com.opencsv.CSVReader;
 
 public class ThinPlateR2LogRSplineKernelTransformTest
 {
