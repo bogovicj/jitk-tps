@@ -1,7 +1,5 @@
 package jitk.spline;
 
-import mpicbg.models.CoordinateTransform;
-
 import org.ejml.data.DenseMatrix64F;
 import org.ejml.ops.CommonOps;
 import org.ejml.ops.NormOps;
@@ -12,7 +10,7 @@ public class TransformInverseGradientDescent
 {
 	int ndims;
 
-	CoordinateTransform xfm;
+	ThinPlateR2LogRSplineKernelTransform xfm;
 
 	DenseMatrix64F jacobian;
 
@@ -46,7 +44,7 @@ public class TransformInverseGradientDescent
 	protected static Logger logger = LogManager.getLogger(
 			TransformInverseGradientDescent.class.getName() );
 
-	public TransformInverseGradientDescent( int ndims, CoordinateTransform xfm )
+	public TransformInverseGradientDescent( int ndims, ThinPlateR2LogRSplineKernelTransform xfm )
 	{
 		this.ndims = ndims;
 		this.xfm = xfm;
@@ -177,7 +175,13 @@ public class TransformInverseGradientDescent
 	}
 
 	/**
-	 * Uses Backtracking Line search to determine a step size
+	 * Uses Backtracking Line search to determine a step size.
+	 * 
+	 * @param c the armijoCondition parameter
+	 * @param beta the fraction to multiply the step size at each iteration ( less than 1 )
+	 * @param maxtries max number of tries
+	 * @param t0 initial step size
+	 * @return the step size
 	 */
 	public double backtrackingLineSearch( double c, double beta, int maxtries, double t0 )
 	{
@@ -204,18 +208,11 @@ public class TransformInverseGradientDescent
 	}
 
 	/**
-	 * Returns true if f( x + \alpha p ) <= f( x )+ \alpha c m where m = ||
-	 * \nabla f ||^2 and f is
+	 * Returns true if the armijo condition is satisfied.
 	 * 
-	 * @param x
-	 *            the point
-	 * @param d
-	 *            the direction
-	 * @param gamma
-	 *            the multiple by which to
-	 * @param t
-	 *            the step size
-	 * @return
+	 * @param c the c parameter
+	 * @param t the step size
+	 * @return true if the step size satisfies the condition
 	 */
 	public boolean armijoCondition( double c, double t )
 	{

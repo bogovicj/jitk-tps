@@ -1,6 +1,5 @@
 package jitk.spline;
 
-import mpicbg.models.CoordinateTransform;
 
 /**
  * Class with helper methods for debugging and testing the this thin plate
@@ -59,12 +58,12 @@ public class XfmUtils {
 		return pts;
 	}
 	
-	public static double maxError( double[][] sourcePoints, double[][] targetPoints, CoordinateTransform xfm )
+	public static double maxError( double[][] sourcePoints, double[][] targetPoints, ThinPlateR2LogRSplineKernelTransform xfm )
 	{
 		return maxError( sourcePoints, targetPoints, xfm, false );
 	}
 	
-	public static double maxError( double[][] sourcePoints, double[][] targetPoints, CoordinateTransform xfm, boolean debug )
+	public static double maxError( double[][] sourcePoints, double[][] targetPoints, ThinPlateR2LogRSplineKernelTransform xfm, boolean debug )
 	{
 		double maxError = 0.0;
 		
@@ -121,8 +120,8 @@ public class XfmUtils {
 	/**
 	 * Copy from src to dest
 	 * 
-	 * @param src
-	 * @param dest
+	 * @param src source
+	 * @param dest destination
 	 */
 	public static void copy(float[] src, double[] dest) {
 		for (int i = 0; i < src.length; i++) {
@@ -133,8 +132,8 @@ public class XfmUtils {
 	/**
 	 * Copy from src to dest
 	 * 
-	 * @param src
-	 * @param dest
+	 * @param src source
+	 * @param dest destination
 	 */
 	public static void copy(double[] src, float[] dest) {
 		for (int i = 0; i < src.length; i++) {
@@ -220,6 +219,29 @@ public class XfmUtils {
 	}
 
 	public static final String printArray(float[] in) {
+		if (in == null)
+			return "null";
+		String out = "";
+		for (int i = 0; i < in.length; i++) {
+			out += in[i] + " ";
+		}
+		return out;
+	}
+
+	public static final String printArray(long[][] in) {
+		if (in == null)
+			return "null";
+		String out = "";
+		for (int i = 0; i < in.length; i++) {
+			for (int j = 0; j < in[0].length; j++) {
+				out += in[i][j] + " ";
+			}
+			out += "\n";
+		}
+		return out;
+	}
+
+	public static final String printArray(long[] in) {
 		if (in == null)
 			return "null";
 		String out = "";
